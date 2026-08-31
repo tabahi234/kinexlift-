@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FITLIFE - Cycle-Synced Fitness</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- localForage CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+    <!-- Privacy Banner -->
+    <div id="privacy-banner" class="banner privacy-banner">
+        <p>🔒 Your progress. Your data. Stored entirely on your device.</p>
+        <button id="dismiss-privacy" class="btn-icon">✖</button>
+    </div>
+
+    <!-- Main Application Container -->
+    <main id="app-container">
+        
+        <!-- Onboarding View (Hidden by default after onboarding) -->
+        <section id="onboarding-view" class="view hidden">
+            <div class="onboarding-card">
+                <h1>Welcome to FitLife</h1>
+                <p>Let's build your profile to sync with your cycle.</p>
+                <div class="input-group">
+                    <label for="profile-age">Age</label>
+                    <!-- Simulated fluid scroll wheel placeholder -->
+                    <input type="number" id="profile-age" value="28" min="16" max="80">
+                </div>
+                <div class="input-group">
+                    <label>Workout Location</label>
+                    <div class="card-selector">
+                        <button class="select-card active" data-location="gym">Gym</button>
+                        <button class="select-card" data-location="home">Home</button>
+                    </div>
+                </div>
+                <button id="btn-save-profile" class="btn-primary">Save Profile</button>
+            </div>
+        </section>
+
+        <!-- Loading State for AI Generation -->
+        <section id="loading-view" class="view hidden">
+            <div class="loading-container">
+                <div class="spinner"></div>
+                <h2 class="pulse-text">Building your profile...</h2>
+                <p class="loading-fact">Fact: Women lose 3-8% of muscle per decade after 30 without resistance training.</p>
+            </div>
+        </section>
+
+        <!-- Daily Dashboard View -->
+        <section id="dashboard-view" class="view">
+            <!-- Phase Banner (Color changes based on cycle logic) -->
+            <header id="phase-banner" class="phase-banner follicular">
+                <div class="header-content">
+                    <div>
+                        <h2>Follicular Phase</h2>
+                        <p class="insight">Push Hard. Increase volume/weight today.</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Emily+Johnson&background=8b9d5c&color=fff" alt="Profile" class="avatar">
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <section class="overview-cards">
+                    <div class="stat-card">
+                        <span class="stat-title">Workouts</span>
+                        <span class="stat-value">128</span>
+                        <span class="stat-desc">Completed</span>
+                    </div>
+                    <div class="stat-card highlight">
+                        <span class="stat-title">Total Points</span>
+                        <span class="stat-value">12,540</span>
+                    </div>
+                </section>
+
+                <section class="workout-tracker">
+                    <h3>Today's Plan</h3>
+                    
+                    <div class="workout-list">
+                        <!-- Workout Item -->
+                        <div class="workout-item">
+                            <div class="workout-details">
+                                <h4>Barbell Squats</h4>
+                                <span class="ghost-text">Last week: 60kg x 8 reps</span>
+                            </div>
+                            <div class="stepper-control">
+                                <button class="stepper-btn minus">-</button>
+                                <span class="current-weight">65kg</span>
+                                <button class="stepper-btn plus">+</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Workout Item -->
+                        <div class="workout-item">
+                            <div class="workout-details">
+                                <h4>Romanian Deadlifts</h4>
+                                <span class="ghost-text">Last week: 55kg x 10 reps</span>
+                            </div>
+                            <div class="stepper-control">
+                                <button class="stepper-btn minus">-</button>
+                                <span class="current-weight">60kg</span>
+                                <button class="stepper-btn plus">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="actions">
+                    <button id="btn-export" class="btn-secondary">Export Data (.json)</button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active">🏠 Home</a>
+            <a href="#" class="nav-item">🏋️ Workouts</a>
+            <a href="#" class="nav-item">🥗 Nutrition</a>
+            <a href="#" class="nav-item">👤 Profile</a>
+        </nav>
+    </main>
+
+    <!-- App Scripts -->
+    <script src="scripts/db.js"></script>
+    <script src="scripts/cycle.js"></script>
+    <script src="scripts/ai.js"></script>
+    <script>
+        // Simple UI interactions
+        document.getElementById('dismiss-privacy').addEventListener('click', (e) => {
+            e.target.closest('.privacy-banner').style.display = 'none';
+        });
+
+        document.getElementById('btn-export').addEventListener('click', async () => {
+            if(window.exportUserData) {
+                await window.exportUserData();
+            } else {
+                alert('Export function not ready yet.');
+            }
+        });
+    </script>
+</body>
+</html>

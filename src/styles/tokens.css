@@ -1,0 +1,118 @@
+/*
+ * Design tokens.
+ *
+ * The olive-and-cream direction is carried over from the prototype. Every
+ * colour is defined here and referenced everywhere else, so a dark palette is
+ * a token swap rather than a sweep through component styles.
+ */
+
+:root {
+  --bg: #f4f1e9;
+  --bg-sunken: #eae6da;
+  --surface: #ffffff;
+  --surface-2: #f7f5ef;
+
+  --text: #2c2c2c;
+  --text-muted: #6b6b6b;
+  --text-faint: #8f8d85;
+
+  --rule: #e2ded2;
+  --rule-strong: #cec9ba;
+
+  --accent: #8b9d5c;
+  --accent-hover: #7a8c45;
+  --accent-soft: #dfe5ce;
+  --on-accent: #ffffff;
+
+  --danger: #b04a44;
+  --danger-soft: #f6e2e0;
+
+  /* Cycle phases - display only. These never modify a working weight. */
+  --phase-menstruation: #d16d6a;
+  --phase-follicular: #8b9d5c;
+  --phase-ovulation: #e8a843;
+  --phase-luteal: #89608e;
+
+  --radius: 20px;
+  --radius-sm: 12px;
+  --radius-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --shadow-soft: 0 1px 2px rgba(44, 44, 44, 0.04), 0 10px 30px rgba(44, 44, 44, 0.05);
+
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', sans-serif;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #14160f;
+    --bg-sunken: #0e100a;
+    --surface: #1e2118;
+    --surface-2: #262a1f;
+
+    --text: #eceae1;
+    --text-muted: #a0a294;
+    --text-faint: #7d8071;
+
+    --rule: #2e3226;
+    --rule-strong: #414634;
+
+    --accent: #a8bc72;
+    --accent-hover: #b8cc82;
+    --accent-soft: #2a3020;
+    --on-accent: #14160f;
+
+    --danger: #e08b84;
+    --danger-soft: #33201e;
+
+    --phase-menstruation: #e08b88;
+    --phase-follicular: #a8bc72;
+    --phase-ovulation: #f0bd68;
+    --phase-luteal: #b088b5;
+
+    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #14160f;
+  --bg-sunken: #0e100a;
+  --surface: #1e2118;
+  --surface-2: #262a1f;
+
+  --text: #eceae1;
+  --text-muted: #a0a294;
+  --text-faint: #7d8071;
+
+  --rule: #2e3226;
+  --rule-strong: #414634;
+
+  --accent: #a8bc72;
+  --accent-hover: #b8cc82;
+  --accent-soft: #2a3020;
+  --on-accent: #14160f;
+
+  --danger: #e08b84;
+  --danger-soft: #33201e;
+
+  --phase-menstruation: #e08b88;
+  --phase-follicular: #a8bc72;
+  --phase-ovulation: #f0bd68;
+  --phase-luteal: #b088b5;
+
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
+
+  color-scheme: dark;
+}

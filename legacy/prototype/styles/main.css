@@ -1,0 +1,281 @@
+:root {
+    /* Color Palette based on reference image */
+    --bg-primary: #F4F1E9; /* Off-white / Cream background */
+    --bg-surface: #FFFFFF; /* White cards */
+    --text-primary: #2C2C2C; /* Dark text */
+    --text-secondary: #6B6B6B; /* Muted text */
+    
+    /* Olive Green Accents */
+    --accent-primary: #8B9D5C; 
+    --accent-hover: #7A8C45;
+    --accent-light: #DFE5CE;
+    
+    /* Phase Colors */
+    --phase-follicular: #8B9D5C;
+    --phase-ovulation: #E8A843;
+    --phase-luteal: #89608E;
+    --phase-menstruation: #D16D6A;
+    
+    /* UI Values */
+    --border-radius: 20px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 80px; /* Space for bottom nav */
+}
+
+/* Utilities */
+.hidden { display: none !important; }
+
+/* Privacy Banner */
+.privacy-banner {
+    background-color: var(--text-primary);
+    color: #fff;
+    padding: 12px var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.btn-icon {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+/* Views */
+.view {
+    padding: var(--spacing-md);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Phase Banner */
+.phase-banner {
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    color: white;
+    margin-bottom: var(--spacing-lg);
+    background-color: var(--phase-follicular); /* Default */
+    transition: background-color 0.3s ease;
+}
+.phase-banner.follicular { background-color: var(--phase-follicular); }
+.phase-banner.ovulation { background-color: var(--phase-ovulation); }
+.phase-banner.luteal { background-color: var(--phase-luteal); }
+.phase-banner.menstruation { background-color: var(--phase-menstruation); }
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.phase-banner h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.phase-banner .insight {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+/* Cards */
+.overview-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+.stat-card {
+    background: var(--bg-surface);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: column;
+}
+.stat-card.highlight {
+    background: var(--accent-primary);
+    color: white;
+}
+.stat-card.highlight .stat-title {
+    color: rgba(255,255,255,0.8);
+}
+.stat-title {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+.stat-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Workout Tracker */
+.workout-tracker h3 {
+    margin-bottom: var(--spacing-md);
+    font-size: 1.2rem;
+}
+.workout-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+.workout-item {
+    background: var(--bg-surface);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.workout-details h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.ghost-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+.stepper-control {
+    display: flex;
+    align-items: center;
+    background: var(--bg-primary);
+    border-radius: 30px;
+    padding: 4px 8px;
+}
+.stepper-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--accent-primary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.current-weight {
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* Buttons */
+.btn-primary, .btn-secondary {
+    display: inline-block;
+    width: 100%;
+    padding: 14px;
+    border-radius: 30px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+.btn-primary {
+    background: var(--accent-primary);
+    color: white;
+}
+.btn-secondary {
+    background: transparent;
+    border: 2px solid var(--accent-primary);
+    color: var(--accent-primary);
+    margin-top: var(--spacing-lg);
+}
+.btn-primary:active { transform: scale(0.98); }
+
+/* Bottom Nav */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--bg-surface);
+    display: flex;
+    justify-content: space-around;
+    padding: 16px 0;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+    z-index: 50;
+}
+.nav-item {
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.nav-item.active {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+/* Loading View */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 70vh;
+    text-align: center;
+}
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--accent-light);
+    border-top: 4px solid var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: var(--spacing-lg);
+}
+.pulse-text {
+    animation: pulse 2s infinite;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+}
+.loading-fact {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    max-width: 80%;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }

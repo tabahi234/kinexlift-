@@ -1,0 +1,532 @@
+/* Components introduced by the training loop: onboarding, session logging,
+   progress charts and the tab bar. Tokens come from tokens.css. */
+
+/* ============================== onboarding ============================== */
+
+.onboarding {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 100dvh;
+  padding-top: var(--space-5);
+}
+
+.progress-track {
+  height: 4px;
+  background: var(--rule);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--radius-pill);
+  transition: width 0.25s ease;
+}
+
+.onboarding-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.onboarding-body h1 {
+  font-size: 1.65rem;
+  line-height: 1.15;
+}
+
+.lede {
+  color: var(--text-muted);
+  font-size: 0.98rem;
+}
+
+.fineprint {
+  color: var(--text-faint);
+  font-size: 0.82rem;
+}
+
+.onboarding-actions {
+  display: flex;
+  gap: var(--space-3);
+  padding-bottom: var(--space-5);
+}
+
+.onboarding-actions .btn {
+  flex: 1;
+}
+
+.onboarding-actions .btn-quiet {
+  flex: 0 0 auto;
+  padding-left: var(--space-5);
+  padding-right: var(--space-5);
+}
+
+/* -------------------------------- choices -------------------------------- */
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.choice {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  background: var(--surface);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.choice:hover {
+  border-color: var(--rule-strong);
+}
+
+.choice.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.choice-label {
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+
+.choice-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.choice.selected .choice-hint {
+  color: var(--accent-hover);
+}
+
+/* --------------------------------- chips --------------------------------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chips.tight {
+  gap: 6px;
+}
+
+.chip {
+  appearance: none;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: var(--surface);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-pill);
+  padding: 8px 14px;
+  cursor: pointer;
+  color: var(--text);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.chip:hover {
+  border-color: var(--rule-strong);
+}
+
+.chip.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+.chip.small {
+  font-size: 0.82rem;
+  padding: 6px 12px;
+}
+
+/* ----------------------------- number fields ----------------------------- */
+
+.number-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  background: var(--surface);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+}
+
+.number-label {
+  font-weight: 500;
+}
+
+.number-input {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.number-input input {
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  width: 4.5ch;
+  text-align: right;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  padding: 0;
+  appearance: textfield;
+}
+
+.number-input input::-webkit-outer-spin-button,
+.number-input input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.number-suffix {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* ================================ session ================================ */
+
+.btn-block {
+  width: 100%;
+}
+
+.exercise-card.complete {
+  border-color: var(--accent);
+}
+
+.exercise-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.exercise-head h3 {
+  font-size: 1.05rem;
+}
+
+.cue {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.prescription {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+}
+
+.prescription-main {
+  font-size: 1.15rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.prescription-x {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.tag-increase {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+.tag-deload {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.rationale {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* ------------------------------ logged sets ------------------------------ */
+
+.logged-sets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.logged-set {
+  appearance: none;
+  font: inherit;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 6px 12px 6px 6px;
+  cursor: pointer;
+}
+
+.logged-index {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.logged-rir {
+  color: var(--text-faint);
+  font-size: 0.75rem;
+}
+
+.done-note {
+  font-size: 0.88rem;
+  color: var(--accent-hover);
+  font-weight: 500;
+}
+
+/* ------------------------------- set logger ------------------------------ */
+
+.set-logger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border-top: 1px solid var(--rule);
+  padding-top: var(--space-4);
+}
+
+.stepper-row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.stepper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.stepper-label {
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.stepper-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-2);
+  border-radius: var(--radius-pill);
+  padding: 4px;
+}
+
+.stepper-btn {
+  appearance: none;
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--accent-hover);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.stepper-value {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.02rem;
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.rir-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------------------------------- swap --------------------------------- */
+
+.swap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border-top: 1px solid var(--rule);
+  padding-top: var(--space-3);
+}
+
+.link-btn {
+  appearance: none;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0;
+  align-self: flex-start;
+}
+
+.link-btn:hover {
+  color: var(--accent-hover);
+}
+
+/* ================================= charts ================================ */
+
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.chart svg {
+  width: 100%;
+  height: 96px;
+  display: block;
+}
+
+.chart-area {
+  fill: var(--accent-soft);
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-dot {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.chart-value {
+  font-size: 1.3rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-change {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+}
+
+.chart-change.up {
+  color: var(--accent-hover);
+}
+
+.chart-empty,
+.loading-note {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* =============================== bottom nav ============================== */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  background: var(--surface);
+  border-top: 1px solid var(--rule);
+  padding-top: 10px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  z-index: 50;
+}
+
+.nav-item {
+  appearance: none;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 18px;
+  border-radius: var(--radius-sm);
+}
+
+.nav-item span {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.nav-item.active {
+  color: var(--accent-hover);
+  font-weight: 650;
+}
