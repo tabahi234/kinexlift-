@@ -9,11 +9,17 @@ import {
   swapExercise,
 } from '../../db/actions';
 import { isBodyweight, isTimed, type Exercise } from '../../domain/exercises';
-import type { PlannedExercise } from '../../domain/plan';
+import type { PlannedExercise, PlannedSession } from '../../domain/plan';
 import type { SetLog } from '../../db/schema';
 import { adjustmentsEnabled } from '../../domain/readiness';
 import { useTodaysPlan } from '../useTodaysPlan';
-import { CheckinForm, CheckinPrompt, ReadinessBanner } from '../checkin/CheckinCard';
+import { CheckinForm, ReadinessBanner } from '../checkin/CheckinCard';
+import { ConditioningCard } from './ConditioningCard';
+import { checkinSkippedOn, skipCheckinOn } from '../../lib/storage';
+import { dateKey } from '../../lib/date';
+import { NextUp } from '../NextUp';
+import { AskPanel } from '../coach/AskPanel';
+import { useFocusEffect } from '../nav';
 
 const KIND_LABEL: Record<string, string> = {
   calibrate: 'First time',
@@ -177,7 +183,17 @@ function ExerciseCard({
           <h3>{exercise.name}</h3>
           <p className="cue">{exercise.cue}</p>
         </div>
-        <span className={`pill ${complete ? 'good' : ''}`}>
+        {/*
+          A row of dots rather than a bare fraction. Mid-set, "two down, one to
+          go" is a thing to see at a glance rather than read - and the number
+          stays next to it, because this is still an app about numbers.
+        */}
+        <span className={`set-tally ${complete ? 'good' : ''}`}>
+          <span className="set-dots" aria-hidden="true">
+            {Array.from({ length: prescription.sets }, (_, index) => (
+              <span key={index} className={`set-dot ${index < done ? 'on' : ''}`} />
+            ))}
+          </span>
           {done}/{prescription.sets}
         </span>
       </header>
@@ -186,7 +202,7 @@ function ExerciseCard({
         <span className="prescription-main">
           {isBodyweight(exercise) ? 'Bodyweight' : `${prescription.weightKg} kg`}
           <span className="prescription-x"> × </span>
-          {bottom}–{top} {isTimed(exercise) ? 'seconds' : 'reps'}
+          {bottom} to {top} {isTimed(exercise) ? 'seconds' : 'reps'}
         </span>
         <span className={`tag tag-${prescription.kind}`}>{KIND_LABEL[prescription.kind]}</span>
       </div>
@@ -267,16 +283,28 @@ function ExerciseCard({
 export function SessionScreen() {
   const today = useTodaysPlan();
   const [editingCheckin, setEditingCheckin] = useState(false);
+  const [skippedCheckin, setSkippedCheckin] = useState(() =>
+    checkinSkippedOn(dateKey()),
+  );
   const [dismissedOffer, setDismissedOffer] = useState(false);
+
+  useFocusEffect((focus) => {
+    if (focus === 'checkin') setEditingCheckin(true);
+  });
 
   if (!today) return <p className="loading-note">Loading your session…</p>;
   if (!today.plan || !today.profile) return null;
 
-  const { plan, profile, openSession, loggedSets, checkin, readiness } = today;
+  const { plan, profile, openSession, loggedSets, loggedConditioning, checkin, readiness } =
+    today;
   const overridden = openSession?.readinessOverride === true;
   const adjustmentsOn = adjustmentsEnabled(profile);
 
-  if (editingCheckin || (!checkin && !openSession)) {
+  // `skippedCheckin` is what makes the skip button do anything. Without it the
+  // gate below is true whenever there is no check-in, so dismissing the form
+  // re-rendered the same form: a dead end on the first screen of the app, and
+  // the only way past it was to answer three questions she had declined.
+  if (editingCheckin || (!checkin && !openSession && !skippedCheckin)) {
     return (
       <>
         <header className="masthead">
@@ -292,7 +320,11 @@ export function SessionScreen() {
           <button
             type="button"
             className="btn btn-quiet btn-block"
-            onClick={() => setEditingCheckin(false)}
+            onClick={() => {
+              setEditingCheckin(false);
+              setSkippedCheckin(true);
+              skipCheckinOn(dateKey());
+            }}
           >
             Skip for today
           </button>
@@ -304,12 +336,14 @@ export function SessionScreen() {
   const setsFor = (exerciseId: string) =>
     loggedSets.filter((set) => set.exerciseId === exerciseId);
 
-  const totalLogged = loggedSets.length;
-  const totalPlanned = plan.exercises.reduce(
-    (sum, entry) => sum + entry.prescription.sets,
-    0,
-  );
-  const wasEased = plan.exercises.some((entry) => entry.prescription.readiness);
+  const isConditioning = plan.conditioning !== null;
+  const totalLogged = isConditioning ? loggedConditioning.length : loggedSets.length;
+  const totalPlanned = isConditioning
+    ? 1
+    : plan.exercises.reduce((sum, entry) => sum + entry.prescription.sets, 0);
+  const wasEased = isConditioning
+    ? plan.conditioning?.readiness !== undefined
+    : plan.exercises.some((entry) => entry.prescription.readiness);
 
   return (
     <>
@@ -317,21 +351,50 @@ export function SessionScreen() {
         <p className="eyebrow">{plan.program.name}</p>
         <h1>{plan.day.name}</h1>
         <p className="sub">
-          {openSession
-            ? `${totalLogged} of ${totalPlanned} sets logged.`
-            : `${plan.exercises.length} exercises. Roughly 45 minutes.`}
+          {isConditioning
+            ? openSession
+              ? totalLogged > 0
+                ? 'Logged. Finish when you are ready.'
+                : 'Log it when you are done.'
+              : `About ${plan.conditioning!.minutes} minutes.`
+            : openSession
+              ? `${totalLogged} of ${totalPlanned} sets logged.`
+              : `${plan.exercises.length} exercises. Roughly 45 minutes.`}
         </p>
+
+        {/* Only while a session is actually running - a full-width empty bar
+            on a screen she has not started yet is decoration, not feedback. */}
+        {openSession && totalPlanned > 0 && (
+          <div
+            className="session-progress"
+            role="progressbar"
+            aria-valuenow={totalLogged}
+            aria-valuemin={0}
+            aria-valuemax={totalPlanned}
+            aria-label="Sets logged this session"
+          >
+            <div
+              className="session-progress-fill"
+              style={{ width: `${Math.min(100, (totalLogged / totalPlanned) * 100)}%` }}
+            />
+          </div>
+        )}
       </header>
 
-      {readiness ? (
+      <NextUp />
+
+      {/*
+        No prompt when there is no check-in: the strip above already has it as
+        the first thing on the list, with a button. Two cards asking for the
+        same three taps is how a screen starts feeling like a form.
+      */}
+      {readiness && (
         <ReadinessBanner
           readiness={readiness}
           adjustmentsOn={adjustmentsOn}
           overridden={overridden}
           onEdit={() => setEditingCheckin(true)}
         />
-      ) : (
-        <CheckinPrompt onStart={() => setEditingCheckin(true)} />
       )}
 
       {today.offerToStopAdjusting && !dismissedOffer && (
@@ -375,18 +438,31 @@ export function SessionScreen() {
           className="btn btn-quiet btn-block"
           onClick={() => void setReadinessOverride(openSession.id, !overridden)}
         >
-          {overridden ? 'Use the lighter session after all' : 'Use my full weights today'}
+          {overridden
+            ? 'Use the lighter session after all'
+            : isConditioning
+              ? 'Do the full session today'
+              : 'Use my full weights today'}
         </button>
       )}
 
-      {plan.exercises.map((planned) => (
-        <ExerciseCard
-          key={planned.slotKey}
-          planned={planned}
-          logged={setsFor(planned.exercise.id)}
+      {plan.conditioning ? (
+        <ConditioningCard
+          prescription={plan.conditioning}
+          profile={profile}
           sessionId={openSession?.id ?? null}
+          logged={loggedConditioning}
         />
-      ))}
+      ) : (
+        plan.exercises.map((planned) => (
+          <ExerciseCard
+            key={planned.slotKey}
+            planned={planned}
+            logged={setsFor(planned.exercise.id)}
+            sessionId={openSession?.id ?? null}
+          />
+        ))
+      )}
 
       {openSession && (
         <button
@@ -397,6 +473,42 @@ export function SessionScreen() {
           {totalLogged > 0 ? 'Finish session' : 'Cancel session'}
         </button>
       )}
+
+      <AskPanel
+        title="Ask about today"
+        hint="It knows this session, how the lifts are moving and how you said you feel. Tell it what you lifted and it writes the sets down for you; tell it what hurts and it can swap the movement."
+        focus="training"
+        suggestions={askSuggestions(plan, checkin !== null)}
+      />
     </>
   );
+}
+
+/**
+ * Openers for the ask box, taken from what today actually is.
+ *
+ * A generic "ask me anything" chip is the reason most in-app assistants are
+ * never tapped. These name the session in front of her.
+ */
+function askSuggestions(plan: PlannedSession, checkedIn: boolean): string[] {
+  if (plan.conditioning) {
+    return [
+      'Is this too much cardio this week?',
+      'Can I do this outside instead?',
+      `Why ${plan.conditioning.minutes} minutes?`,
+    ];
+  }
+
+  const first = plan.exercises[0];
+  const name = first?.exercise.name;
+  return [
+    // Logging by sentence is the least discoverable thing the coach does, so
+    // the opener spells out the exact shape of it with today's own numbers.
+    first
+      ? `I did 3 sets of 10 on the ${name!.toLowerCase()} at ${first.prescription.weightKg} kg.`
+      : 'Log what I just did.',
+    name ? `Give me something else instead of the ${name.toLowerCase()}.` : 'Swap something in today’s session.',
+    'My knee is sore today. What should I change?',
+    checkedIn ? 'Why are today’s weights what they are?' : 'Should I train today at all?',
+  ];
 }

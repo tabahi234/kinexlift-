@@ -1,4 +1,10 @@
-import type { Profile } from '../db/schema';
+import type { ConditioningLog, Profile } from '../db/schema';
+import {
+  applyReadinessToConditioning,
+  prescribeConditioning,
+  type ConditioningPrescription,
+} from './conditioning';
+import { trainingStyleOf } from './profile';
 import {
   candidatesWithFallback,
   getExercise,
@@ -11,6 +17,7 @@ import {
 import { prescribe, type Prescription, type RepRange, type SessionHistory } from './progression';
 import { adjustmentsEnabled, applyReadiness, type Readiness } from './readiness';
 import {
+  isConditioningDay,
   nextDay,
   programFor,
   repRangeFor,
@@ -39,7 +46,18 @@ export interface PlannedSession {
   program: Program;
   day: TemplateDay;
   exercises: PlannedExercise[];
+  /** Set on a conditioning day; null on a lifting day. Never both. */
+  conditioning: ConditioningPrescription | null;
 }
+
+/** History the planner needs beyond the sets: her conditioning log. */
+export interface ExtraHistory {
+  /** Most recent first, already filtered to the relevant kind. */
+  easy: ConditioningLog[];
+  intervals: ConditioningLog[];
+}
+
+export const NO_EXTRA_HISTORY: ExtraHistory = { easy: [], intervals: [] };
 
 export function selectionContextFor(profile: Profile): SelectionContext {
   return {
@@ -93,9 +111,29 @@ export function buildSession(
   profile: Profile,
   historyByExercise: Map<string, SessionHistory>,
   readiness: Readiness | null = null,
+  extra: ExtraHistory = NO_EXTRA_HISTORY,
 ): PlannedSession {
   const context = selectionContextFor(profile);
   const adjustmentsOn = adjustmentsEnabled(profile);
+
+  // A conditioning day has no slots to resolve, and giving it an empty
+  // exercise list rather than a special case is what keeps the session screen
+  // from having to ask which kind of day it is in three separate places.
+  if (isConditioningDay(day)) {
+    const kind = day.conditioning!;
+    const prescription = prescribeConditioning(
+      kind,
+      kind === 'easy' ? extra.easy : extra.intervals,
+      profile.experience,
+    );
+    return {
+      program,
+      day,
+      exercises: [],
+      conditioning: applyReadinessToConditioning(prescription, readiness, adjustmentsOn),
+    };
+  }
+
   const goalRange = repRangeFor(profile.goal);
   const mainSets = setsForGoal(profile.goal);
   const chosen: string[] = [];
@@ -129,7 +167,7 @@ export function buildSession(
     });
   });
 
-  return { program, day, exercises };
+  return { program, day, exercises, conditioning: null };
 }
 
 export function planFor(
@@ -137,17 +175,18 @@ export function planFor(
   lastCompletedDayId: string | null,
   historyByExercise: Map<string, SessionHistory>,
   readiness: Readiness | null = null,
+  extra: ExtraHistory = NO_EXTRA_HISTORY,
 ): PlannedSession {
-  const program = programFor(profile.daysPerWeek);
+  const program = programFor(profile.daysPerWeek, trainingStyleOf(profile));
   const day = nextDay(program, lastCompletedDayId);
-  return buildSession(day, program, profile, historyByExercise, readiness);
+  return buildSession(day, program, profile, historyByExercise, readiness, extra);
 }
 
 export function dayForRotation(profile: Profile, lastCompletedDayId: string | null): {
   program: Program;
   day: TemplateDay;
 } {
-  const program = programFor(profile.daysPerWeek);
+  const program = programFor(profile.daysPerWeek, trainingStyleOf(profile));
   return { program, day: nextDay(program, lastCompletedDayId) };
 }
 

@@ -162,6 +162,8 @@
   border: 1.5px solid var(--rule);
   border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-4);
+  flex: 1;
+  min-width: 0;
 }
 
 .number-label {
@@ -490,26 +492,41 @@
 
 /* =============================== bottom nav ============================== */
 
+/*
+ * A floating bar rather than a strip welded to the bottom edge.
+ *
+ * Centred on its own rather than stretched edge to edge, so on a wide screen
+ * it sits under the column of content instead of stranding five icons across
+ * a metre of empty page. The page keeps `--nav-clearance` of padding under
+ * everything to make room for it.
+ */
 .bottom-nav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - var(--space-5)));
   display: flex;
-  justify-content: space-around;
+  gap: var(--space-1);
+  padding: var(--space-2);
   background: var(--surface);
-  border-top: 1px solid var(--rule);
-  padding-top: 10px;
-  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  /* Content scrolls underneath it, so let a little of that show through. */
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-float);
   z-index: 50;
 }
 
 .nav-item {
   appearance: none;
+  flex: 1;
   background: none;
   border: none;
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
@@ -517,16 +534,95 @@
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: 4px 18px;
-  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-1);
+  border-radius: var(--radius-pill);
 }
 
-.nav-item span {
-  font-size: 1.15rem;
-  line-height: 1;
+.nav-item svg {
+  flex: 0 0 auto;
+}
+
+.nav-item.active svg {
+  stroke-width: 2.1;
 }
 
 .nav-item.active {
   color: var(--accent-hover);
   font-weight: 650;
+  background: var(--accent-soft);
+}
+
+/* --------------------------------- toasts -------------------------------- */
+
+.toast-container {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 20px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 1000;
+  pointer-events: none;
+  width: 90%;
+  max-width: 400px;
+}
+
+.toast {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: toast-slide-up 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+             toast-fade-out 0.4s ease 3.6s forwards;
+  pointer-events: auto;
+}
+
+@keyframes toast-slide-up {
+  from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toast-fade-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-10px) scale(0.95); }
+}
+
+.toast-ok {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  border: 1.5px solid var(--accent);
+}
+
+.toast-error {
+  background: #fdf2f2;
+  color: #c92a2a;
+  border: 1.5px solid #ffc9c9;
+}
+
+.toast-neutral {
+  background: var(--surface);
+  color: var(--text);
+  border: 1.5px solid var(--rule);
+}
+
+.toast-warn {
+  background: #fff9db;
+  color: #e67700;
+  border: 1.5px solid #ffe066;
+}
+
+@media (prefers-color-scheme: dark) {
+  .toast-error {
+    background: #3b1818;
+    color: #ffc9c9;
+    border-color: #c92a2a;
+  }
+  .toast-warn {
+    background: #3b2c00;
+    color: #ffe066;
+    border-color: #e67700;
+  }
 }

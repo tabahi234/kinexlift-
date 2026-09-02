@@ -48,3 +48,37 @@ export function formatBytes(bytes: number): string {
   }
   return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[unit]}`;
 }
+
+/* --------------------------- transient choices --------------------------- */
+
+/**
+ * "Not today, thanks."
+ *
+ * The daily check-in gates the session screen, which is right the first time
+ * she opens the app in the morning and wrong every time after: declining it
+ * and then tapping Fuel and back used to put the same three questions in front
+ * of her again, with no way past them except answering.
+ *
+ * Stored against the date so it expires by itself at midnight, and in
+ * localStorage rather than the database because it is a decision about one
+ * screen on one device, not an observation worth syncing or exporting.
+ * Every access is guarded: private browsing throws on both read and write.
+ */
+const CHECKIN_SKIP_KEY = 'checkin-skipped';
+
+export function checkinSkippedOn(date: string): boolean {
+  try {
+    return localStorage.getItem(CHECKIN_SKIP_KEY) === date;
+  } catch {
+    return false;
+  }
+}
+
+export function skipCheckinOn(date: string): void {
+  try {
+    localStorage.setItem(CHECKIN_SKIP_KEY, date);
+  } catch {
+    // A browser that will not store this is a browser where the prompt comes
+    // back on the next visit. Annoying, never broken.
+  }
+}

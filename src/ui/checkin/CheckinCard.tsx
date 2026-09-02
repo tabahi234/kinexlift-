@@ -176,20 +176,4 @@ export function ReadinessBanner({
   );
 }
 
-export function CheckinPrompt({ onStart }: { onStart: () => void }) {
-  return (
-    <button type="button" className="card checkin-prompt" onClick={onStart}>
-      <div>
-        <strong>How are you today?</strong>
-        <span className="hint">
-          Three taps. Today&rsquo;s session adjusts to your answer.
-        </span>
-      </div>
-      <span className="checkin-prompt-go" aria-hidden="true">
-        →
-      </span>
-    </button>
-  );
-}
-
 export { clearTodaysCheckin };

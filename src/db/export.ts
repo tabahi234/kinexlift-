@@ -1,7 +1,20 @@
 import type { Table } from 'dexie';
+import { releaseSyncOwnership } from '../lib/sync';
 import { db } from './db';
 import { SCHEMA_VERSION } from './schema';
-import type { Checkin, CycleEvent, Profile, SetLog, Session, SyncMeta } from './schema';
+import type {
+  BodyMetric,
+  ChatMessage,
+  Checkin,
+  CoachNote,
+  ConditioningLog,
+  CycleEvent,
+  MealLog,
+  Profile,
+  SetLog,
+  Session,
+  SyncMeta,
+} from './schema';
 import { APP_SLUG } from '../config';
 
 /**
@@ -14,7 +27,7 @@ import { APP_SLUG } from '../config';
  * file into her account later.
  */
 
-export const EXPORT_FORMAT = 'strength-app-export';
+export const EXPORT_FORMAT = 'kinexlift-export';
 
 export interface ExportData {
   profile: Profile[];
@@ -22,6 +35,18 @@ export interface ExportData {
   sets: SetLog[];
   checkins: Checkin[];
   cycleEvents: CycleEvent[];
+  conditioning: ConditioningLog[];
+  bodyMetrics: BodyMetric[];
+  meals: MealLog[];
+  /**
+   * Conversation, included only when she asks for it.
+   *
+   * A chat log is the one thing in here she is most likely to want gone, and
+   * nothing the app displays is reconstructed from it - so the default export,
+   * which is also what a backup file becomes, leaves it out.
+   */
+  chat?: ChatMessage[];
+  coachNotes?: CoachNote[];
 }
 
 export interface ExportBundle {
@@ -43,7 +68,18 @@ export type ImportReport = Record<keyof ExportData, TableReport> & {
   total: TableReport;
 };
 
-const TABLE_KEYS = ['profile', 'sessions', 'sets', 'checkins', 'cycleEvents'] as const;
+const TABLE_KEYS = [
+  'profile',
+  'sessions',
+  'sets',
+  'checkins',
+  'cycleEvents',
+  'conditioning',
+  'bodyMetrics',
+  'meals',
+  'chat',
+  'coachNotes',
+] as const;
 
 const emptyReport = (): TableReport => ({
   added: 0,
@@ -58,21 +94,51 @@ const emptyReport = (): TableReport => ({
  * Soft-deleted rows are included on purpose. Tombstones have to travel, or an
  * import would resurrect everything the user deleted.
  */
-export async function exportAll(): Promise<ExportBundle> {
-  const [profile, sessions, sets, checkins, cycleEvents] = await Promise.all([
+export async function exportAll(
+  options: { includeConversation?: boolean } = {},
+): Promise<ExportBundle> {
+  const [
+    profile,
+    sessions,
+    sets,
+    checkins,
+    cycleEvents,
+    conditioning,
+    bodyMetrics,
+    meals,
+  ] = await Promise.all([
     db.profile.toArray(),
     db.sessions.toArray(),
     db.sets.toArray(),
     db.checkins.toArray(),
     db.cycleEvents.toArray(),
+    db.conditioning.toArray(),
+    db.bodyMetrics.toArray(),
+    db.meals.toArray(),
   ]);
+
+  const data: ExportData = {
+    profile,
+    sessions,
+    sets,
+    checkins,
+    cycleEvents,
+    conditioning,
+    bodyMetrics,
+    meals,
+  };
+
+  if (options.includeConversation) {
+    data.chat = await db.chat.toArray();
+    data.coachNotes = await db.coachNotes.toArray();
+  }
 
   return {
     format: EXPORT_FORMAT,
     app: APP_SLUG,
     schemaVersion: SCHEMA_VERSION,
     exportedAt: Date.now(),
-    data: { profile, sessions, sets, checkins, cycleEvents },
+    data,
   };
 }
 
@@ -154,14 +220,32 @@ export function parseBundle(text: string): ParseResult {
 /**
  * Upgrades an older export in memory to the current schema.
  *
- * Adding version 2 means: bump SCHEMA_VERSION, add a `case 1:` here that
- * transforms v1 rows into v2 rows, and add a Dexie `.version(2)` block in
- * db.ts. Exports written today keep working forever.
+ * Adding version 3 means adding a `case 2:` here, a Dexie `.version(3)` block
+ * in db.ts, and bumping SCHEMA_VERSION. Exports written today keep working
+ * forever.
  */
 function migrate(bundle: ExportBundle): ExportBundle {
   let current = bundle;
   for (let version = current.schemaVersion; version < SCHEMA_VERSION; version++) {
     switch (version) {
+      case 1:
+        // v2 added conditioning, body metrics and meal logs. A v1 file has
+        // none of those tables, and the merge below iterates over the keys it
+        // finds - so the upgrade is to give them empty arrays rather than let
+        // `undefined` reach mergeTable. The v2 profile fields are all
+        // optional and resolved by domain/profile.ts, so old profile rows
+        // need no rewriting at all.
+        current = {
+          ...current,
+          schemaVersion: 2,
+          data: {
+            ...current.data,
+            conditioning: current.data.conditioning ?? [],
+            bodyMetrics: current.data.bodyMetrics ?? [],
+            meals: current.data.meals ?? [],
+          },
+        };
+        break;
       default:
         current = { ...current, schemaVersion: version + 1 };
     }
@@ -182,18 +266,41 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportReport> 
     sets: emptyReport(),
     checkins: emptyReport(),
     cycleEvents: emptyReport(),
+    conditioning: emptyReport(),
+    bodyMetrics: emptyReport(),
+    meals: emptyReport(),
+    chat: emptyReport(),
+    coachNotes: emptyReport(),
     total: emptyReport(),
   };
 
   await db.transaction(
     'rw',
-    [db.profile, db.sessions, db.sets, db.checkins, db.cycleEvents],
+    [
+      db.profile,
+      db.sessions,
+      db.sets,
+      db.checkins,
+      db.cycleEvents,
+      db.conditioning,
+      db.bodyMetrics,
+      db.meals,
+      db.chat,
+      db.coachNotes,
+    ],
     async () => {
       await mergeTable(db.profile, bundle.data.profile, report.profile);
       await mergeTable(db.sessions, bundle.data.sessions, report.sessions);
       await mergeTable(db.sets, bundle.data.sets, report.sets);
-      await mergeCheckins(bundle.data.checkins, report.checkins);
+      await mergeByDate(db.checkins, bundle.data.checkins, report.checkins);
       await mergeTable(db.cycleEvents, bundle.data.cycleEvents, report.cycleEvents);
+      await mergeTable(db.conditioning, bundle.data.conditioning, report.conditioning);
+      await mergeByDate(db.bodyMetrics, bundle.data.bodyMetrics, report.bodyMetrics);
+      await mergeTable(db.meals, bundle.data.meals, report.meals);
+      // Absent from most files, and absent is not an error: mergeTable
+      // ignores anything that is not an array.
+      await mergeTable(db.chat, bundle.data.chat, report.chat);
+      await mergeTable(db.coachNotes, bundle.data.coachNotes, report.coachNotes);
     },
   );
 
@@ -235,24 +342,31 @@ async function mergeTable<T extends SyncMeta>(
 }
 
 /**
- * Check-ins are unique per date, so an incoming row can collide with a local
- * row that has a different id - she checked in on both devices the same day.
- * A plain put would throw on the unique index, so resolve by date here.
+ * Merge for tables with a unique `date` index - check-ins and weigh-ins.
+ *
+ * An incoming row can collide with a local row that has a different id: she
+ * checked in on both her phone and her laptop the same morning. A plain put
+ * would throw on the unique index, so the collision is resolved by date, with
+ * the same last-write-wins rule used everywhere else.
  */
-async function mergeCheckins(incoming: unknown, report: TableReport): Promise<void> {
+async function mergeByDate<T extends SyncMeta & { date: string }>(
+  table: Table<T, string>,
+  incoming: unknown,
+  report: TableReport,
+): Promise<void> {
   if (!Array.isArray(incoming)) return;
 
   for (const candidate of incoming) {
-    if (!isSyncRecord(candidate) || typeof (candidate as Checkin).date !== 'string') {
+    if (!isSyncRecord(candidate) || typeof (candidate as T).date !== 'string') {
       report.invalid++;
       continue;
     }
-    const record = candidate as Checkin;
+    const record = candidate as T;
 
-    const byId = await db.checkins.get(record.id);
+    const byId = await table.get(record.id);
     if (byId) {
       if (record.updatedAt > byId.updatedAt) {
-        await db.checkins.put(record);
+        await table.put(record);
         report.updated++;
       } else {
         report.skippedOlder++;
@@ -260,11 +374,11 @@ async function mergeCheckins(incoming: unknown, report: TableReport): Promise<vo
       continue;
     }
 
-    const byDate = await db.checkins.where('date').equals(record.date).first();
+    const byDate = await table.where('date').equals(record.date).first();
     if (byDate) {
       if (record.updatedAt > byDate.updatedAt) {
-        await db.checkins.delete(byDate.id);
-        await db.checkins.put(record);
+        await table.delete(byDate.id);
+        await table.put(record);
         report.updated++;
       } else {
         report.skippedOlder++;
@@ -272,7 +386,7 @@ async function mergeCheckins(incoming: unknown, report: TableReport): Promise<vo
       continue;
     }
 
-    await db.checkins.put(record);
+    await table.put(record);
     report.added++;
   }
 }
@@ -282,7 +396,18 @@ async function mergeCheckins(incoming: unknown, report: TableReport): Promise<vo
 export async function wipeAll(): Promise<void> {
   await db.transaction(
     'rw',
-    [db.profile, db.sessions, db.sets, db.checkins, db.cycleEvents],
+    [
+      db.profile,
+      db.sessions,
+      db.sets,
+      db.checkins,
+      db.cycleEvents,
+      db.conditioning,
+      db.bodyMetrics,
+      db.meals,
+      db.chat,
+      db.coachNotes,
+    ],
     async () => {
       await Promise.all([
         db.profile.clear(),
@@ -290,7 +415,17 @@ export async function wipeAll(): Promise<void> {
         db.sets.clear(),
         db.checkins.clear(),
         db.cycleEvents.clear(),
+        db.conditioning.clear(),
+        db.bodyMetrics.clear(),
+        db.meals.clear(),
+        db.chat.clear(),
+        db.coachNotes.clear(),
       ]);
     },
   );
+
+  // Erasing the log is the one action that genuinely makes this device
+  // nobody's, so the backup ownership marker goes with it. Without this, a
+  // device wiped and handed on would refuse to back up as its new owner.
+  releaseSyncOwnership();
 }

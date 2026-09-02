@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useToast } from './ToastProvider';
 import {
   downloadExport,
   importBundle,
@@ -41,9 +42,9 @@ const PERSISTENCE_COPY: Record<PersistenceState, { pill: string; hint: string }>
 };
 
 export function DataPanel() {
+  const { showToast } = useToast();
   const [persistence, setPersistence] = useState<PersistenceState>('unsupported');
   const [usage, setUsage] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<Feedback>(null);
   const [busy, setBusy] = useState(false);
   const [confirmingWipe, setConfirmingWipe] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -60,14 +61,13 @@ export function DataPanel() {
 
   async function run(task: () => Promise<Feedback>) {
     setBusy(true);
-    setFeedback(null);
     try {
-      setFeedback(await task());
+      const fb = await task();
+      if (fb) {
+        showToast(fb.text, fb.tone === 'neutral' ? 'warn' : fb.tone);
+      }
     } catch (error) {
-      setFeedback({
-        tone: 'error',
-        text: error instanceof Error ? error.message : 'Something went wrong.',
-      });
+      showToast(error instanceof Error ? error.message : 'Something went wrong.', 'error');
     } finally {
       setBusy(false);
       void refreshStorage();
@@ -95,8 +95,8 @@ export function DataPanel() {
       <header>
         <h2>Your data</h2>
         <p className="hint">
-          Everything lives in this browser on this device. Nothing is uploaded, and
-          there is no account.
+          Everything lives in this browser, on this device. This file is a
+          complete backup and needs no account at all.
         </p>
       </header>
 
@@ -180,8 +180,7 @@ export function DataPanel() {
         onChange={handleFile}
       />
 
-      {feedback && <p className={`message ${feedback.tone}`}>{feedback.text}</p>}
-
+      {/* Feedback is now handled via toasts */}
       <div className="btn-row">
         <button
           type="button"

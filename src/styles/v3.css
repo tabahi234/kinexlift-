@@ -1,0 +1,1373 @@
+/*
+ * Styles for the two things added in v3: the "what next" strip that answers
+ * where the way forward is, and the cards the coach puts in front of her.
+ *
+ * Same rule as v2.css - every colour comes from tokens.css, so the dark
+ * palette needs nothing here.
+ */
+
+/* -------------------------------- icons -------------------------------- */
+
+/*
+ * Icons are stroked with `currentColor`, so they take the colour of whatever
+ * they sit next to and never need a dark-mode rule of their own.
+ */
+.with-icon {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.with-icon svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+/* ------------------------------ the welcome ------------------------------ */
+
+.welcome-screen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-6) 0;
+}
+
+.welcome-name {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.welcome-tagline {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  margin-top: calc(var(--space-2) * -1);
+}
+
+.welcome-points {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0;
+  margin: var(--space-4) 0 0;
+  list-style: none;
+}
+
+.welcome-points li {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.welcome-points strong {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.welcome-point-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+}
+
+/* -------------------------------- dials -------------------------------- */
+
+.dial {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.dial-arc {
+  transition: stroke-dashoffset 0.4s ease;
+}
+
+.dial-centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.dial-big {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.dial-small {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+.dial-fraction {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+.dial-of {
+  color: var(--text-faint);
+}
+
+.fuel-dial {
+  display: flex;
+  gap: var(--space-5);
+  align-items: center;
+  padding-bottom: var(--space-2);
+}
+
+.dial-legend {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dial-legend li {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.swatch {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: var(--radius-pill);
+}
+
+.swatch.energy {
+  background: var(--accent);
+}
+
+.swatch.protein {
+  background: var(--macro-protein);
+}
+
+.swatch-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.swatch-text strong {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* --------------------------- session progress --------------------------- */
+
+.session-progress {
+  height: 5px;
+  margin-top: var(--space-3);
+  background: var(--bg-sunken);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.session-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--radius-pill);
+  transition: width 0.3s ease;
+}
+
+.set-tally {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex: 0 0 auto;
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  background: var(--bg-sunken);
+  border-radius: var(--radius-pill);
+}
+
+.set-tally.good {
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+}
+
+.set-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.set-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--rule-strong);
+  border-radius: var(--radius-pill);
+}
+
+.set-dot.on {
+  background: var(--accent);
+}
+
+/*
+ * `.chat` sets `display: flex`, and an author rule beats the browser's own
+ * `[hidden] { display: none }` no matter how specific that one looks. Without
+ * this line the attribute does nothing at all.
+ */
+.chat[hidden] {
+  display: none;
+}
+
+/* ------------------------- the coach's greeting ------------------------- */
+
+/*
+ * Bigger than an ordinary masthead, and only ever seen once per conversation.
+ * It is the one place the app says its own name to her, so it is allowed the
+ * room.
+ */
+.masthead.welcome h1 {
+  font-size: 2.15rem;
+  line-height: 1.1;
+}
+
+.masthead.welcome .sub {
+  max-width: 42ch;
+  margin-top: var(--space-3);
+}
+
+/* What the greeting shrinks to once there is a conversation to read. */
+.brandbar {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+}
+
+.brandmark {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.brandbar-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* ------------------------------- next up ------------------------------- */
+
+.next-up {
+  border: 1px solid var(--accent-soft);
+}
+
+.next-up-head {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.next-up-head header {
+  flex: 1;
+  min-width: 0;
+}
+
+.next-up .eyebrow {
+  margin: 0 0 var(--space-1);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.next-up .btn-block {
+  margin-bottom: var(--space-4);
+}
+
+.step-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  border-top: 1px solid var(--rule);
+}
+
+.step-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+  padding: var(--space-3) 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+}
+
+.step:last-child .step-row {
+  border-bottom: 0;
+}
+
+/*
+ * Outstanding steps carry the icon of the thing they are; finished ones
+ * collapse to a tick on olive. The icon colour has to be set for both states -
+ * an icon drawn in `--on-accent` inside a transparent circle is white on white.
+ */
+.step-mark {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: var(--text-faint);
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-pill);
+}
+
+.step.done .step-mark {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.step-text {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.step-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.step.done .step-title {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--rule-strong);
+}
+
+.step-hint {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+
+.step-go {
+  flex: 0 0 auto;
+  font-size: 1.2rem;
+  color: var(--text-faint);
+}
+
+/* ------------------------------ ask panel ------------------------------ */
+
+.ask-panel .chat {
+  margin: var(--space-3) 0;
+}
+
+.ask-panel .composer {
+  margin-bottom: var(--space-2);
+}
+
+/* ------------------------------ proposals ------------------------------ */
+
+.proposal {
+  padding: var(--space-4);
+  margin: var(--space-2) 0 var(--space-4);
+  background: var(--surface-2);
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--radius);
+}
+
+.proposal-head {
+  margin: 0 0 var(--space-3);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.proposal .meal-group:last-of-type {
+  margin-bottom: var(--space-3);
+}
+
+/*
+ * The steppers are a fixed width; everything the row has to say about the food
+ * is not. Without this the name column shrinks to fit the buttons and a
+ * portion line wraps over three lines on a phone.
+ */
+.proposal .meal-row {
+  align-items: flex-start;
+}
+
+.proposal .meal-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.proposal .meal-actions {
+  flex: 0 0 auto;
+}
+
+.proposal-totals {
+  margin: 0 0 var(--space-2);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.proposal .btn-row {
+  margin-top: var(--space-4);
+}
+
+.proposal.applied {
+  border-style: dashed;
+}
+
+.proposal-receipt {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.log-row {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.log-row:last-of-type {
+  border-bottom: 0;
+}
+
+.log-row-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.log-name {
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+/*
+ * Two across, not three. Three steppers on a 375px screen leaves about thirty
+ * pixels for each number, which is where "22.5 kg" wraps onto two lines and
+ * "10" disappears under the plus button.
+ */
+.log-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+/* Weight and reps pair up; whatever is left takes the full width. */
+.log-field:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
+.log-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Three steppers across a phone is tight; the surface has to give way. */
+.log-field .stepper-control {
+  background: var(--surface);
+  padding: 3px;
+}
+
+.log-field .stepper-btn {
+  width: 32px;
+  height: 32px;
+  font-size: 1.1rem;
+  background: var(--surface-2);
+}
+
+.log-field .stepper-value {
+  font-size: 0.92rem;
+}
+
+.swap-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+}
+
+.swap-row:last-of-type {
+  border-bottom: 0;
+}
+
+.swap-row input {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.swap-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.swap-to {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.swap-from {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+/* --------------------------------- fuel --------------------------------- */
+
+/*
+   Everything below belongs to the food half of the app, which was rebuilt
+   around one idea: the screen should say what it just did. The old picker
+   logged a serving and showed her nothing, so she tapped again.
+*/
+
+/* The portion set once, above the list, instead of adjusted afterwards on
+   every row. Two rotis is the commonest thing anyone logs and it used to cost
+   three taps in two places. */
+.portion-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  margin: var(--space-3) 0;
+  background: var(--surface-2);
+  border-radius: var(--radius-pill);
+}
+
+.portion-label {
+  font-size: 0.85rem;
+  color: var(--text-faint);
+}
+
+.portion-stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.portion-value {
+  min-width: 2.5ch;
+  font-weight: 650;
+  font-size: 1.02rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The receipt. Confirms in words what was written and offers to take it
+   back, which is the whole difference between a log she trusts and one she
+   double-taps. */
+.added-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  margin: var(--space-3) 0;
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+}
+
+.added-text {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.9rem;
+  color: var(--accent-hover);
+}
+
+/* What she logs most, one tap away. By the second week it is the same eight
+   things, and making her search for each of them is the friction that ends
+   the habit. */
+.quick-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.quick-chip {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 7px 12px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.quick-chip:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.quick-chip:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+
+.quick-name {
+  max-width: 16ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-kcal {
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A meal heading that carries its own total. "Lunch" alone made her add the
+   rows up herself to answer the only question she had about it. */
+.meal-slot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.meal-slot-kcal {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.meal-servings {
+  min-width: 2.5ch;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* What a plan adds up to, before she opens it. The old card made her expand
+   the whole day to find out whether it was worth expanding. */
+.plan-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+/* ----------------------------- country picker ----------------------------- */
+
+.country-picker {
+  display: flex;
+  flex-direction: column;
+}
+
+.country-current {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.country-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* The region the answer resolves to, always shown. A picker that silently
+   decides "Türkiye means Middle Eastern" should say so where she can
+   disagree with it. */
+.country-cuisine {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.country-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.country-list.scrolling {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.country-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) 0;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+}
+
+.country-row:last-child {
+  border-bottom: 0;
+}
+
+.country-row.selected .country-name {
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+
+/* ---------------------------- fuel, compacted ---------------------------- */
+
+/*
+   Four macros in a two-by-two grid rather than four full-width bars stacked
+   down the card. Calories and protein are the rings; these three and iron are
+   the ones she glances at, and giving each a heading row, a track and a
+   margin spent most of a screen saying so.
+*/
+.macro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.macro-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.macro-tile .macro-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.macro-tile .macro-value {
+  font-size: 1.02rem;
+}
+
+.macro-tile .macro-track {
+  display: block;
+  height: 5px;
+  margin-top: 2px;
+  overflow: hidden;
+  background: var(--bg-sunken);
+  border-radius: var(--radius-pill);
+}
+
+.macro-tile .macro-fill {
+  display: block;
+}
+
+/* Said once, in the place she would otherwise wonder. An empty state that
+   explains itself is shorter than a card that shows an empty list. */
+.empty-note {
+  margin: var(--space-4) 0;
+  font-size: 0.9rem;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* --------------------------- food she wrote --------------------------- */
+
+.custom-food {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--rule);
+}
+
+.custom-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.text-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.text-field input {
+  width: 100%;
+  padding: var(--space-3);
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+}
+
+/* The one part of the food log that leaves the device, so it is boxed off
+   and says so rather than sitting inline looking like the rest of the form. */
+.estimate-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.estimate-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.estimate-input {
+  width: 100%;
+  padding: var(--space-3);
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+}
+
+.estimate-box .btn {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.custom-actions .btn {
+  flex: 1;
+}
+
+/* A guess she accepted is still a guess, and the row says so for good. */
+.meal-title {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.meal-title .tag {
+  font-size: 0.62rem;
+  padding: 2px 7px;
+  background: var(--bg-sunken);
+}
+
+.message.note {
+  color: var(--text);
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+}
+
+.message.note p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/*
+   A logged row has a name, a portion, a stepper and a remove, and on a 375px
+   screen those do not fit on one line: "Chicken shawarma wrap" broke across
+   three lines beside its own buttons. Below the breakpoint the controls drop
+   to their own right-aligned row, which gives the name the full width and
+   makes the buttons easier to hit rather than harder.
+*/
+.meal-row {
+  flex-wrap: wrap;
+}
+
+.meal-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.meal-actions {
+  margin-left: auto;
+}
+
+/* Smaller than the session steppers on purpose: this is an adjustment, not
+   the main action of the screen. */
+.meal-actions .stepper-btn {
+  width: 32px;
+  height: 32px;
+  font-size: 1.15rem;
+}
+
+@media (max-width: 430px) {
+  .meal-name {
+    flex: 1 1 100%;
+  }
+
+  .meal-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: var(--space-1);
+  }
+}
+
+/*
+   Two and three number fields side by side inside the custom-food form.
+
+   `.number-field` puts its label and its input on one line, which is right on
+   a full-width row and wrong at a third of 375px: the input squeezed to
+   nothing and the "kcal" ran off the edge of the card. Inside this form the
+   label sits above the input and the row is a grid that reflows on its own,
+   so the same markup works for the two-up and the three-up.
+*/
+.custom-food .stepper-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--space-3);
+}
+
+.custom-food .number-field {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.custom-food .number-input {
+  width: 100%;
+  align-items: baseline;
+}
+
+.custom-food .number-input input {
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  font-size: 1.1rem;
+}
+
+/* -------------------------------- account -------------------------------- */
+
+.account-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  margin: var(--space-3) 0;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.account-box.signed-in {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.account-who {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: 0.9rem;
+  min-width: 0;
+}
+
+.account-who strong {
+  overflow-wrap: anywhere;
+}
+
+.account-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.account-form input {
+  width: 100%;
+  padding: var(--space-3);
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+}
+
+.account-sent {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.account-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+/*
+   Shown on sign-up only. Grading a password she chose months ago, on the way
+   in, is noise she can do nothing about.
+*/
+.password-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.meter-fill {
+  display: block;
+  height: 4px;
+  background: var(--rule-strong);
+  border-radius: var(--radius-pill);
+  transition: width 200ms ease, background-color 200ms ease;
+}
+
+.meter-fill.s0 {
+  width: 15%;
+  background: var(--danger);
+}
+
+.meter-fill.s1 {
+  width: 45%;
+}
+
+.meter-fill.s2 {
+  width: 72%;
+  background: var(--accent);
+}
+
+.meter-fill.s3 {
+  width: 100%;
+  background: var(--accent-hover);
+}
+
+.meter-text {
+  font-size: 0.8rem;
+  color: var(--danger);
+}
+
+.meter-text.ok {
+  color: var(--text-faint);
+}
+
+/*
+   The reasoning, one tap away.
+
+   Every card on You used to carry three lines of explanation, always open.
+   Each was worth saying; nine of them together were a wall people scrolled
+   past without reading any of it - the length of an explanation with the
+   effect of none.
+*/
+.why {
+  margin-top: var(--space-2);
+}
+
+.why .hint {
+  margin-top: var(--space-2);
+}
+
+/*
+   Segment labels do not wrap.
+
+   "Food & cycle" broke onto two lines at 375px and knocked the other two
+   segments out of alignment, which makes a control that should read as one
+   object look broken. The label is honest and worth keeping, so the control
+   gives way instead: no wrapping, and slightly tighter type on a narrow
+   screen. Truncation is the last resort and only for a label longer than any
+   of these.
+*/
+.segment {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+@media (max-width: 400px) {
+  .segment {
+    padding-inline: var(--space-2);
+    font-size: 0.84rem;
+  }
+}
+
+/* ------------------------------ the coach ------------------------------ */
+
+/*
+   A chat screen, laid out like one.
+
+   The thread grows from the top and the composer sits at the bottom of the
+   viewport rather than at the bottom of the document. Before this, three
+   settings cards lived under the composer, so the box she came to type in was
+   two thumb-scrolls up the page and the thread had no bottom to speak of.
+
+   The whole column is the height of the screen minus the floating tab bar,
+   which is what `--nav-clearance` already reserves everywhere else.
+*/
+.coach {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--nav-clearance));
+}
+
+.coach-thread {
+  flex: 1;
+  min-height: 0;
+}
+
+/* The composer is the last thing in the column, and it stays put while the
+   thread scrolls behind it. */
+.coach-composer {
+  position: sticky;
+  bottom: 0;
+  margin-bottom: 0;
+  padding: var(--space-3) 0;
+  background: var(--bg);
+}
+
+.coach-suggestions {
+  margin-bottom: var(--space-4);
+}
+
+.coach-bar {
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* The brand mark and the label stay together; the menu goes to the far end. */
+.coach-bar .brandbar-label {
+  margin-right: auto;
+}
+
+.masthead-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.icon-btn {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+/* -------------------------------- drawer -------------------------------- */
+
+/*
+   Everything that is about the conversation rather than in it.
+
+   A drawer rather than more cards under the thread: standing notes, the
+   rolling summary and the off switch are all things she opens once a month,
+   and stacking them below the composer made the composer hard to reach every
+   single day.
+*/
+/*
+   Above the floating tab bar, which sits at 50, and below the toasts at
+   1000. The first version tucked in underneath the nav, so the tab bar
+   appeared to punch a hole through an open drawer. A toast still shows over
+   the top, which is right: it is usually reporting on what she just tapped
+   in here.
+*/
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.drawer-scrim.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  width: min(360px, 88vw);
+  background: var(--surface);
+  border-left: 1px solid var(--rule);
+  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.12);
+  transform: translateX(100%);
+  transition: transform 200ms ease;
+}
+
+.drawer.open {
+  transform: translateX(0);
+}
+
+/* Closed means closed: without this, everything inside is still tabbable and
+   still read out, just parked off the side of the screen. */
+.drawer[aria-hidden='true'] {
+  visibility: hidden;
+  transition: transform 200ms ease, visibility 0s linear 200ms;
+}
+
+.drawer.open[aria-hidden='false'] {
+  visibility: visible;
+  transition: transform 200ms ease;
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  padding-top: calc(var(--space-4) + env(safe-area-inset-top));
+  border-bottom: 1px solid var(--rule);
+}
+
+.drawer-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
+}
+
+.drawer-section {
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--rule);
+}
+
+.drawer-section:last-child {
+  border-bottom: 0;
+  margin-bottom: 0;
+}
+
+.drawer-section h3 {
+  margin: 0 0 var(--space-2);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.drawer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.drawer-row:last-of-type {
+  border-bottom: 0;
+}
+
+.drawer-row-text {
+  font-size: 0.9rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.drawer-add {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.drawer-add input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-pill);
+}
+
+.drawer-section .btn-block + .btn-block {
+  margin-top: var(--space-2);
+}
