@@ -11,6 +11,8 @@ import type {
   Profile,
   SetLog,
   Session,
+  Supplement,
+  SupplementIntake,
 } from './schema';
 
 export class AppDatabase extends Dexie {
@@ -24,6 +26,8 @@ export class AppDatabase extends Dexie {
   meals!: Table<MealLog, string>;
   chat!: Table<ChatMessage, string>;
   coachNotes!: Table<CoachNote, string>;
+  supplements!: Table<Supplement, string>;
+  supplementIntake!: Table<SupplementIntake, string>;
 
   constructor(name: string = APP_SLUG) {
     super(name);
@@ -50,6 +54,15 @@ export class AppDatabase extends Dexie {
       chat: 'id, createdAt, updatedAt',
       coachNotes: 'id, kind, createdAt, updatedAt',
     });
+
+    // v3: supplements, from the first round of testing. The list she takes
+    // and the days she took them. Intake is not unique on date - one row per
+    // (date, supplement) is enforced by the action, so two devices ticking
+    // the same day cannot make a sync fail on an index.
+    this.version(3).stores({
+      supplements: 'id, updatedAt',
+      supplementIntake: 'id, date, updatedAt, [date+supplementId]',
+    });
   }
 }
 
@@ -66,6 +79,8 @@ export const TABLE_NAMES = [
   'meals',
   'chat',
   'coachNotes',
+  'supplements',
+  'supplementIntake',
 ] as const;
 
 export type TableName = (typeof TABLE_NAMES)[number];

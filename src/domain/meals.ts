@@ -266,10 +266,13 @@ export function buildDayPlan(input: MealPlanInput): DayPlan | null {
   // leaving it out of the anchors is why the planner used to be unable to
   // suggest half the table. Its carbohydrate is accounted for below rather
   // than served twice.
-  const proteinLike = pantry.filter(
-    (food) =>
-      !food.supplement &&
-      (food.group === 'protein' || food.group === 'dairy' || food.group === 'mixed'),
+  // Nothing from a tub anchors a plate - not whey as the protein, and not a
+  // sports drink as the carbohydrate, which is what the carb filter below
+  // produced the day the drink was added. Supplements stay in `pantry` for
+  // the snack list, where a protein bar is genuinely a snack.
+  const plates = pantry.filter((food) => !food.supplement);
+  const proteinLike = plates.filter(
+    (food) => food.group === 'protein' || food.group === 'dairy' || food.group === 'mixed',
   );
   // Anchoring a main meal on something with six grams of protein a serving is
   // what produces "three glasses of lassi for lunch": the maths is right and
@@ -278,14 +281,14 @@ export function buildDayPlan(input: MealPlanInput): DayPlan | null {
   const mains = proteinLike.filter((food) => food.proteinG >= MAIN_PROTEIN_MIN_G);
   const proteins = kitchen(mains.length > 0 ? mains : proteinLike, cuisine);
   const carbs = kitchen(
-    pantry.filter((food) => food.group === 'carb'),
+    plates.filter((food) => food.group === 'carb'),
     cuisine,
   );
-  const veg = pantry.filter((food) => food.group === 'veg');
-  const fruit = pantry.filter((food) => food.group === 'fruit');
+  const veg = plates.filter((food) => food.group === 'veg');
+  const fruit = plates.filter((food) => food.group === 'fruit');
   const sides = kitchen(veg.length > 0 ? veg : fruit, cuisine);
   const fats = kitchen(
-    pantry.filter((food) => food.group === 'fat'),
+    plates.filter((food) => food.group === 'fat'),
     cuisine,
   );
   // Tagged by hand, not inferred from the group. The inferred version offered

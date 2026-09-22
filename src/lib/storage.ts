@@ -82,3 +82,48 @@ export function skipCheckinOn(date: string): void {
     // back on the next visit. Annoying, never broken.
   }
 }
+
+/**
+ * "I know. Train anyway."
+ *
+ * The eight-hour pause after a session, and the rest day, both have a small
+ * override for the person whose week genuinely does not fit - a two-a-day, a
+ * shift that moved. Same shape as the check-in skip: one date, one device,
+ * expires by itself, never synced.
+ */
+const GATE_OVERRIDE_KEY = 'session-gate-override';
+
+export function gateOverriddenOn(date: string): boolean {
+  try {
+    return localStorage.getItem(GATE_OVERRIDE_KEY) === date;
+  } catch {
+    return false;
+  }
+}
+
+export function overrideGateOn(date: string): void {
+  try {
+    localStorage.setItem(GATE_OVERRIDE_KEY, date);
+  } catch {
+    // Falls back to the gate. She can tap it again.
+  }
+}
+
+/** The welcome-back note, dismissed for today. */
+const GAP_NOTE_KEY = 'gap-note-dismissed';
+
+export function gapNoteDismissedOn(date: string): boolean {
+  try {
+    return localStorage.getItem(GAP_NOTE_KEY) === date;
+  } catch {
+    return false;
+  }
+}
+
+export function dismissGapNoteOn(date: string): void {
+  try {
+    localStorage.setItem(GAP_NOTE_KEY, date);
+  } catch {
+    // Comes back tomorrow at worst.
+  }
+}

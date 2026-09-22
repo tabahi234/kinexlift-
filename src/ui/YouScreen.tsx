@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { getProfile, updateProfile } from '../db/repo';
-import { liftingDaysIn, programFor } from '../domain/templates';
+import { programFor } from '../domain/templates';
 import { adjustmentsEnabled } from '../domain/readiness';
 import {
   cloudSyncEnabled,
@@ -18,6 +18,11 @@ import { resetSyncCursors, syncNow, type SyncOutcome } from '../lib/sync';
 import { supabaseConfigured } from '../lib/supabase';
 import { DataPanel } from './DataPanel';
 import { AccountCard } from './AccountCard';
+import { DayPicker } from './DayPicker';
+import { MenuRow, PageHeader } from './PageHeader';
+import { DEFAULT_DAYS, trainingDaysOf, WEEKDAY_SHORT } from '../domain/schedule';
+import { useFocusEffect } from './nav';
+import { IconArchive, IconBowl, IconChat, IconDumbbell } from './icons';
 import type {
   CycleTracking,
   DietPattern,
@@ -51,7 +56,20 @@ const CYCLE_LABEL: Record<CycleTracking, string> = {
   off: 'Not for me',
 };
 
-type Panel = 'training' | 'food' | 'account';
+type Panel = 'training' | 'food' | 'account' | 'data';
+
+/**
+ * The four places under You. A menu rather than three tabs of cards:
+ * testers could not find settings because "Training / Food & cycle /
+ * Account" gave no hint of what was inside, and the account tab held both
+ * the coach switch and the export button. Each row names what is behind it.
+ */
+const PLACES: { id: Panel; title: string; hint: string; icon: React.ReactNode }[] = [
+  { id: 'training', title: 'Training', hint: 'Programme, training days, daily check-in, about you', icon: <IconDumbbell size={18} /> },
+  { id: 'food', title: 'Food & cycle', hint: 'How you eat, where you cook, cycle tracking', icon: <IconBowl size={18} /> },
+  { id: 'account', title: 'Coach & backup', hint: 'The AI coach, and backing up to an account', icon: <IconChat size={18} /> },
+  { id: 'data', title: 'Your data', hint: 'Export, import, storage, delete everything', icon: <IconArchive size={18} /> },
+];
 
 /**
  * A short paragraph that is there when she wants it and gone when she does not.
@@ -83,48 +101,71 @@ function Why({ children }: { children: React.ReactNode }) {
 export function YouScreen() {
   const profile = useLiveQuery(() => getProfile(), []);
   const [syncState, setSyncState] = useState<SyncOutcome | 'running' | null>(null);
-  const [panel, setPanel] = useState<Panel>('training');
+  const [panel, setPanel] = useState<Panel | null>(null);
+
+  // Another screen can open a place directly: "change your training days
+  // under You" is a sentence that should be a link.
+  useFocusEffect((focus) => {
+    if (PLACES.some((place) => place.id === focus)) setPanel(focus as Panel);
+  });
 
   if (!profile) return <p className="loading-note">Loading…</p>;
 
   const style = trainingStyleOf(profile);
   const program = programFor(profile.daysPerWeek, style);
-  const dayOptions = style === 'hybrid' ? [2, 3, 4, 5] : [2, 3, 4];
 
-  const tabs: { id: Panel; label: string }[] = [
-    { id: 'training', label: 'Training' },
-    { id: 'food', label: 'Food & cycle' },
-    { id: 'account', label: 'Account' },
-  ];
+  // A profile from before the picker has no days. The gate treats that as
+  // "any day", and the subtitle says so rather than showing the default the
+  // picker would start from.
+  const pickedDays = trainingDaysOf(profile);
+  const trainingDays = pickedDays ?? DEFAULT_DAYS[Math.min(7, Math.max(1, profile.daysPerWeek))]!;
+  const place = PLACES.find((entry) => entry.id === panel) ?? null;
+
+  if (place === null) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="You"
+          title="Settings"
+          sub={
+            pickedDays
+              ? `${program.name}, ${pickedDays.map((day) => WEEKDAY_SHORT[day]).join(' · ')}.`
+              : `${program.name}, any day of the week. Pick your days under Training.`
+          }
+        />
+        <section className="card">
+          <ul className="menu-list">
+            {PLACES.map((entry) => (
+              <MenuRow
+                key={entry.id}
+                icon={entry.icon}
+                title={entry.title}
+                hint={entry.hint}
+                onClick={() => {
+                  setPanel(entry.id);
+                  window.scrollTo({ top: 0 });
+                }}
+              />
+            ))}
+          </ul>
+        </section>
+        <p className="footnote">
+          Not medical advice. Talk to a clinician about periods that stop, pain, or
+          injury.
+        </p>
+      </>
+    );
+  }
 
   return (
     <>
-      <header className="masthead">
-        <p className="eyebrow">You</p>
-        <h1>Settings</h1>
-        <p className="sub">
-          {program.name}.
-          {style === 'hybrid' &&
-            ` ${liftingDaysIn(program)} lifting ${liftingDaysIn(program) === 1 ? 'day' : 'days'} and ${
-              program.days.length - liftingDaysIn(program)
-            } conditioning in each turn.`}
-        </p>
-      </header>
-
-      <div className="segmented" role="tablist" aria-label="Settings sections">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={panel === tab.id}
-            className={`segment ${panel === tab.id ? 'selected' : ''}`}
-            onClick={() => setPanel(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <PageHeader
+        eyebrow="You"
+        title={place.title}
+        sub={place.hint}
+        onBack={() => setPanel(null)}
+        backLabel="Settings"
+      />
 
       {panel === 'training' && (
         <>
@@ -160,22 +201,25 @@ export function YouScreen() {
 
           <section className="card">
             <header>
-              <h2>Days a week</h2>
+              <h2>Training days</h2>
+              <p className="hint">
+                Tap the days that fit your week. The number of days picks the
+                programme; the days themselves are when the app expects you.
+              </p>
             </header>
-            <div className="chips">
-              {dayOptions.map((days) => (
-                <button
-                  key={days}
-                  type="button"
-                  className={`chip ${profile.daysPerWeek === days ? 'selected' : ''}`}
-                  aria-pressed={profile.daysPerWeek === days}
-                  onClick={() => void updateProfile({ daysPerWeek: days })}
-                >
-                  {days} days
-                </button>
-              ))}
-            </div>
-            <p className="fineprint">Your logged history stays exactly as it is.</p>
+            <DayPicker
+              value={trainingDays}
+              onChange={(days) =>
+                void updateProfile({ trainingDays: days, daysPerWeek: days.length })
+              }
+              min={2}
+              max={style === 'hybrid' ? 5 : 6}
+            />
+            <p className="fineprint">
+              {trainingDays.length} days a week: {program.name.toLowerCase()}. A missed
+              day never skips a session - you pick up where you left off. Your logged
+              history stays exactly as it is.
+            </p>
           </section>
 
           <section className="card">
@@ -462,14 +506,10 @@ export function YouScreen() {
             </section>
           )}
 
-          <DataPanel />
         </>
       )}
 
-      <p className="footnote">
-        Not medical advice. Talk to a clinician about periods that stop, pain, or
-        injury.
-      </p>
+      {panel === 'data' && <DataPanel />}
     </>
   );
 }

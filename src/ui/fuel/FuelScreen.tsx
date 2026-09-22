@@ -47,6 +47,8 @@ import {
 } from '../../domain/profile';
 import { dateKey } from '../../lib/date';
 import { FoodPicker } from './FoodPicker';
+import { SupplementsCard } from './SupplementsCard';
+import { PageHeader, SectionTabs, type SectionTab } from '../PageHeader';
 import { AskPanel } from '../coach/AskPanel';
 import { useFocusEffect } from '../nav';
 import { useToast } from '../ToastProvider';
@@ -354,7 +356,7 @@ function PlanCard({
                 {SLOT_LABEL[meal.slot]}
                 <span className="meal-slot-kcal">
                   {Math.round(meal.totals.kcal)} kcal ·{' '}
-                  {Math.round(meal.totals.proteinG)} g P
+                  {Math.round(meal.totals.proteinG)} g protein
                 </span>
               </h3>
               {meal.items.map((item) => (
@@ -435,6 +437,9 @@ export function FuelScreen() {
   const today = dateKey();
   const meals = useLiveQuery(() => getMealsFor(today), [today]);
   const [adding, setAdding] = useState(false);
+  // What the picker opens on. Empty for the normal "add food"; a word for
+  // the links that open it on one corner of the table.
+  const [addQuery, setAddQuery] = useState('');
   const [openPlan, setOpenPlan] = useState<'rest' | 'day' | null>(null);
   const [quickAddId, setQuickAddId] = useState<string | null>(null);
 
@@ -454,6 +459,7 @@ export function FuelScreen() {
       // Something else on another screen sent her here to log food, so put
       // her on the panel that does it as well as opening the picker.
       setPanel('today');
+      setAddQuery('');
       setAdding(true);
     }
   });
@@ -520,38 +526,46 @@ export function FuelScreen() {
     setQuickAddId(null);
   };
 
-  const tabs: { id: Panel; label: string }[] = [
-    { id: 'today', label: 'Today' },
-    { id: 'plan', label: 'Plan' },
-    { id: 'targets', label: 'Targets' },
+  // Round 1 of testing: "the meal section is hard to understand". Three
+  // tabs called Today, Plan and Targets under a heading that always said
+  // "Today" told her nothing about where she was. Each tab now names what
+  // it is for, the heading follows the tab, and one line under the tabs says
+  // what the tab does.
+  const tabs: (SectionTab<Panel> & { title: string })[] = [
+    {
+      id: 'today',
+      label: 'Today',
+      title: 'What you ate today',
+      about: 'Log what you eat and take, and watch the day fill up.',
+    },
+    {
+      id: 'plan',
+      label: 'Meal ideas',
+      title: 'Meal ideas',
+      about: 'Meals built to hit your numbers, from food you cook. Log one in a tap.',
+    },
+    {
+      id: 'targets',
+      label: 'My numbers',
+      title: 'Your numbers',
+      about: 'Where your calorie and protein targets come from, and the settings behind them.',
+    },
   ];
+  const current = tabs.find((tab) => tab.id === panel) ?? tabs[0]!;
 
   return (
     <>
-      <header className="masthead">
-        <p className="eyebrow">Fuel</p>
-        <h1>Today</h1>
-        <p className="sub">
-          {remainingKcal > 0
+      <PageHeader
+        eyebrow="Fuel"
+        title={current.title}
+        sub={
+          remainingKcal > 0
             ? `${Math.round(remainingKcal)} kcal left of ${plan.target.kcal}.`
-            : `${Math.abs(Math.round(remainingKcal))} kcal past ${plan.target.kcal}. Not a problem on its own.`}
-        </p>
-      </header>
+            : `${Math.abs(Math.round(remainingKcal))} kcal past ${plan.target.kcal}. Not a problem on its own.`
+        }
+      />
 
-      <div className="segmented" role="tablist" aria-label="Fuel sections">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={panel === tab.id}
-            className={`segment ${panel === tab.id ? 'selected' : ''}`}
-            onClick={() => setPanel(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <SectionTabs tabs={tabs} active={panel} onChange={setPanel} label="Fuel sections" />
 
       {/* A floor she is under outranks every tab. It is the one thing on this
           screen that is about her health rather than her day. */}
@@ -588,12 +602,16 @@ export function FuelScreen() {
               date={today}
               defaultSlot={slotNow}
               canEstimate={coachEnabled(profile)}
-              onDone={() => setAdding(false)}
+              initialQuery={addQuery}
+              onDone={() => {
+                setAdding(false);
+                setAddQuery('');
+              }}
             />
           ) : (
             <section className="card">
               <header>
-                <h2>Log something</h2>
+                <h2>Log food</h2>
                 <p className="hint">
                   {usualFoods.length > 0
                     ? `One tap adds a standard serving to ${SLOT_LABEL[slotNow].toLowerCase()}.`
@@ -629,53 +647,9 @@ export function FuelScreen() {
             </section>
           )}
 
-          {gapOptions.length > 0 && (
-            <section className="card">
-              <header>
-                <h2 className="with-icon">
-                  <IconBolt size={19} />
-                  {Math.round(proteinShort)} g of protein to go
-                </h2>
-                <p className="hint">
-                  {remainingKcal > 0
-                    ? 'The most protein per calorie you can eat, and one thing you actually cook. Tap one to log it.'
-                    : 'You are at your calories already, so these take you over. Protein is the one worth going over on. Tap one to log it.'}
-                </p>
-              </header>
-              <div className="food-list">
-                {gapOptions.map((option) => (
-                  <button
-                    key={option.food.id}
-                    type="button"
-                    className="food-row"
-                    disabled={quickAddId === option.food.id}
-                    onClick={() => {
-                      setQuickAddId(option.food.id);
-                      void logMeal(option.food.id, slotNow, option.servings, today).then(
-                        () => setQuickAddId(null),
-                      );
-                    }}
-                  >
-                    <span className="food-name">
-                      {option.food.name}
-                      <span className="food-serving">
-                        {option.servings === 1
-                          ? option.food.serving
-                          : `${option.servings} × ${option.food.serving}`}
-                      </span>
-                    </span>
-                    <span className="food-macros">
-                      +{Math.round(option.adds.proteinG)} g protein
-                      <span className="food-protein">
-                        {Math.round(option.adds.kcal)} kcal
-                      </span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
-
+          {/* The log sits directly under the button that adds to it. It used
+              to be four cards further down, past supplements and the protein
+              list, so adding a roti showed her nothing until she scrolled. */}
           {bySlot.length > 0 ? (
             <section className="card">
               <header>
@@ -692,7 +666,7 @@ export function FuelScreen() {
                     <h3 className="meal-slot">
                       {SLOT_LABEL[group.slot]}
                       <span className="meal-slot-kcal">
-                        {slotTotals.kcal} kcal · {slotTotals.proteinG} g P
+                        {slotTotals.kcal} kcal · {slotTotals.proteinG} g protein
                       </span>
                     </h3>
                     {group.entries.map((entry) => {
@@ -774,6 +748,62 @@ export function FuelScreen() {
               meal.
             </p>
           )}
+
+          <SupplementsCard
+            date={today}
+            onLogShake={() => {
+              setAddQuery('supplement');
+              setAdding(true);
+            }}
+          />
+
+          {gapOptions.length > 0 && (
+            <section className="card">
+              <header>
+                <h2 className="with-icon">
+                  <IconBolt size={19} />
+                  {Math.round(proteinShort)} g of protein to go
+                </h2>
+                <p className="hint">
+                  {remainingKcal > 0
+                    ? 'The most protein per calorie you can eat, and one thing you actually cook. Tap one to log it.'
+                    : 'You are at your calories already, so these take you over. Protein is the one worth going over on. Tap one to log it.'}
+                </p>
+              </header>
+              <div className="food-list">
+                {gapOptions.map((option) => (
+                  <button
+                    key={option.food.id}
+                    type="button"
+                    className="food-row"
+                    disabled={quickAddId === option.food.id}
+                    onClick={() => {
+                      setQuickAddId(option.food.id);
+                      void logMeal(option.food.id, slotNow, option.servings, today).then(
+                        () => setQuickAddId(null),
+                      );
+                    }}
+                  >
+                    <span className="food-name">
+                      {option.food.name}
+                      <span className="food-serving">
+                        {option.servings === 1
+                          ? option.food.serving
+                          : `${option.servings} × ${option.food.serving}`}
+                      </span>
+                    </span>
+                    <span className="food-macros">
+                      +{Math.round(option.adds.proteinG)} g protein
+                      <span className="food-protein">
+                        {Math.round(option.adds.kcal)} kcal
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
         </>
       )}
 

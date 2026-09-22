@@ -13,6 +13,8 @@ import type {
   Profile,
   SetLog,
   Session,
+  Supplement,
+  SupplementIntake,
   SyncMeta,
 } from './schema';
 import { APP_SLUG } from '../config';
@@ -38,6 +40,9 @@ export interface ExportData {
   conditioning: ConditioningLog[];
   bodyMetrics: BodyMetric[];
   meals: MealLog[];
+  /** Absent from a file written before v3. */
+  supplements?: Supplement[];
+  supplementIntake?: SupplementIntake[];
   /**
    * Conversation, included only when she asks for it.
    *
@@ -79,6 +84,8 @@ const TABLE_KEYS = [
   'meals',
   'chat',
   'coachNotes',
+  'supplements',
+  'supplementIntake',
 ] as const;
 
 const emptyReport = (): TableReport => ({
@@ -106,6 +113,8 @@ export async function exportAll(
     conditioning,
     bodyMetrics,
     meals,
+    supplements,
+    supplementIntake,
   ] = await Promise.all([
     db.profile.toArray(),
     db.sessions.toArray(),
@@ -115,6 +124,8 @@ export async function exportAll(
     db.conditioning.toArray(),
     db.bodyMetrics.toArray(),
     db.meals.toArray(),
+    db.supplements.toArray(),
+    db.supplementIntake.toArray(),
   ]);
 
   const data: ExportData = {
@@ -126,6 +137,8 @@ export async function exportAll(
     conditioning,
     bodyMetrics,
     meals,
+    supplements,
+    supplementIntake,
   };
 
   if (options.includeConversation) {
@@ -246,6 +259,19 @@ function migrate(bundle: ExportBundle): ExportBundle {
           },
         };
         break;
+      case 2:
+        // v3 added supplements. Same shape of upgrade as v1 -> v2: the two
+        // new tables get empty arrays and nothing else moves.
+        current = {
+          ...current,
+          schemaVersion: 3,
+          data: {
+            ...current.data,
+            supplements: current.data.supplements ?? [],
+            supplementIntake: current.data.supplementIntake ?? [],
+          },
+        };
+        break;
       default:
         current = { ...current, schemaVersion: version + 1 };
     }
@@ -271,6 +297,8 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportReport> 
     meals: emptyReport(),
     chat: emptyReport(),
     coachNotes: emptyReport(),
+    supplements: emptyReport(),
+    supplementIntake: emptyReport(),
     total: emptyReport(),
   };
 
@@ -287,6 +315,8 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportReport> 
       db.meals,
       db.chat,
       db.coachNotes,
+      db.supplements,
+      db.supplementIntake,
     ],
     async () => {
       await mergeTable(db.profile, bundle.data.profile, report.profile);
@@ -301,6 +331,8 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportReport> 
       // ignores anything that is not an array.
       await mergeTable(db.chat, bundle.data.chat, report.chat);
       await mergeTable(db.coachNotes, bundle.data.coachNotes, report.coachNotes);
+      await mergeTable(db.supplements, bundle.data.supplements, report.supplements);
+      await mergeTable(db.supplementIntake, bundle.data.supplementIntake, report.supplementIntake);
     },
   );
 
@@ -407,6 +439,8 @@ export async function wipeAll(): Promise<void> {
       db.meals,
       db.chat,
       db.coachNotes,
+      db.supplements,
+      db.supplementIntake,
     ],
     async () => {
       await Promise.all([
@@ -420,6 +454,8 @@ export async function wipeAll(): Promise<void> {
         db.meals.clear(),
         db.chat.clear(),
         db.coachNotes.clear(),
+        db.supplements.clear(),
+        db.supplementIntake.clear(),
       ]);
     },
   );

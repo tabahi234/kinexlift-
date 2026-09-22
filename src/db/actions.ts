@@ -19,8 +19,11 @@ import type {
   MealSlot,
   Session,
   SetLog,
+  Supplement,
+  SupplementIntake,
   SymptomTag,
 } from './schema';
+import type { SupplementDraft } from '../domain/supplements';
 
 /** Every mutation the training UI performs, in one place. */
 
@@ -506,4 +509,47 @@ export async function clearCoachMemory(): Promise<void> {
       .filter((row) => row.deletedAt === null)
       .map((row) => remove(db.coachNotes, row.id)),
   ]);
+}
+
+/* ----------------------------- supplements ----------------------------- */
+
+export async function addSupplement(draft: SupplementDraft): Promise<Supplement> {
+  return create<Supplement>(db.supplements, draft);
+}
+
+export async function updateSupplement(id: string, draft: SupplementDraft): Promise<void> {
+  await patch(db.supplements, id, draft);
+}
+
+/**
+ * Removes it from the list. Its past ticks stay, soft-deleted with their
+ * parent hidden: the record that she took iron through March is still true
+ * after she stops taking iron.
+ */
+export async function removeSupplement(id: string): Promise<void> {
+  await remove(db.supplements, id);
+}
+
+/**
+ * Ticks or unticks one supplement for one day.
+ *
+ * One live intake row per (date, supplement). Two devices can each write
+ * one before they sync, so the untick removes every live row it finds rather
+ * than the one it expects, and the checklist reads the newest.
+ */
+export async function setSupplementTaken(
+  supplementId: string,
+  taken: boolean,
+  date = dateKey(),
+): Promise<void> {
+  const existing = (
+    await db.supplementIntake.where('[date+supplementId]').equals([date, supplementId]).toArray()
+  ).filter((row) => row.deletedAt === null);
+
+  if (taken) {
+    if (existing.length > 0) return;
+    await create<SupplementIntake>(db.supplementIntake, { supplementId, date });
+    return;
+  }
+  await Promise.all(existing.map((row) => remove(db.supplementIntake, row.id)));
 }

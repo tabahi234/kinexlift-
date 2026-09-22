@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { logMeal } from '../../db/actions';
 import { deleteMeal } from '../../db/actions';
 import { searchFoods, type Food } from '../../domain/foods';
@@ -32,6 +32,7 @@ export function FoodPicker({
   date,
   defaultSlot,
   canEstimate,
+  initialQuery = '',
   onDone,
 }: {
   /** Already filtered to her diet and exclusions by the caller. */
@@ -39,11 +40,21 @@ export function FoodPicker({
   cuisine: Cuisine | null;
   date: string;
   defaultSlot: MealSlot;
+  /** Pre-filled search, for a link that opens the picker on one thing. */
+  initialQuery?: string;
   /** She has opted into the coach, so an estimate may leave the device. */
   canEstimate: boolean;
   onDone: () => void;
 }) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
+  const card = useRef<HTMLElement>(null);
+
+  // Opened from a link further down the page - "log a shake or bar" - the
+  // picker replaces a card above the fold, and she is left looking at the
+  // place she tapped with nothing apparently having happened.
+  useEffect(() => {
+    if (initialQuery !== '') card.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [initialQuery]);
   const [slot, setSlot] = useState<MealSlot>(defaultSlot);
   const [servings, setServings] = useState(1);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -75,7 +86,7 @@ export function FoodPicker({
   };
 
   return (
-    <section className="card">
+    <section className="card" ref={card}>
       <header>
         <h2>Add food</h2>
         <p className="hint">
@@ -183,7 +194,7 @@ export function FoodPicker({
             <span className="food-macros">
               {Math.round(food.kcal * servings)} kcal
               <span className="food-protein">
-                {Math.round(food.proteinG * servings * 10) / 10} g P
+                {Math.round(food.proteinG * servings * 10) / 10} g protein
               </span>
             </span>
           </button>

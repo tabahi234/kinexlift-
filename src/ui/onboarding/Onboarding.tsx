@@ -8,6 +8,9 @@ import { CountryPicker } from '../CountryPicker';
 import { CUISINE_LABEL, cuisineForCountry } from '../../domain/cuisines';
 import { AVOIDABLE, DIET_HINT, DIET_LABEL } from '../../domain/foods';
 import { guessCountry } from '../../lib/locale';
+import { DEFAULT_DAYS } from '../../domain/schedule';
+import { programFor } from '../../domain/templates';
+import { DayPicker } from '../DayPicker';
 import type {
   CycleTracking,
   DietPattern,
@@ -30,6 +33,8 @@ interface Answers {
   equipment: Equipment[];
   trainingStyle: TrainingStyle;
   daysPerWeek: number;
+  /** Weekdays, 0 = Sunday. `daysPerWeek` is kept equal to its length. */
+  trainingDays: number[];
   age: number | null;
   bodyWeightKg: number | null;
   heightCm: number | null;
@@ -48,6 +53,7 @@ const INITIAL: Answers = {
   equipment: GYM_EQUIPMENT,
   trainingStyle: 'strength',
   daysPerWeek: 3,
+  trainingDays: DEFAULT_DAYS[3]!,
   age: null,
   bodyWeightKg: null,
   heightCm: null,
@@ -299,7 +305,8 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       location: answers.location,
       equipment: answers.location === 'gym' ? GYM_EQUIPMENT : answers.equipment,
       trainingStyle: answers.trainingStyle,
-      daysPerWeek: answers.daysPerWeek,
+      daysPerWeek: answers.trainingDays.length,
+      trainingDays: answers.trainingDays,
       birthYear: answers.age === null ? null : thisYear - answers.age,
       bodyWeightKg: answers.bodyWeightKg,
       heightCm: answers.heightCm,
@@ -532,26 +539,24 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
         {step === 'days' && (
           <>
-            <h1>How many days a week?</h1>
-            <p className="lede">Be honest rather than optimistic. You can change it later.</p>
-            <Choices
-              value={answers.daysPerWeek}
-              onChange={(value) => update('daysPerWeek', value)}
-              options={
-                answers.trainingStyle === 'hybrid'
-                  ? [
-                      { value: 2, label: 'Two days', hint: 'One lifting day, one easy conditioning day' },
-                      { value: 3, label: 'Three days', hint: 'Two lifting, one easy conditioning' },
-                      { value: 4, label: 'Four days', hint: 'Two lifting, one easy and one interval day' },
-                      { value: 5, label: 'Five days', hint: 'Three lifting, one easy and one interval day' },
-                    ]
-                  : [
-                      { value: 2, label: 'Two days', hint: 'Two full-body sessions' },
-                      { value: 3, label: 'Three days', hint: 'Three full-body sessions' },
-                      { value: 4, label: 'Four days', hint: 'Upper and lower split' },
-                    ]
-              }
+            <h1>Which days will you train?</h1>
+            <p className="lede">
+              Tap the days that fit your week. Be honest rather than optimistic;
+              you can change them later, and a missed day never skips a session.
+            </p>
+            <DayPicker
+              value={answers.trainingDays}
+              onChange={(days) => update('trainingDays', days)}
+              min={2}
+              max={answers.trainingStyle === 'hybrid' ? 5 : 6}
             />
+            <p className="fineprint">
+              {answers.trainingDays.length} days a week:{' '}
+              {programFor(answers.trainingDays.length, answers.trainingStyle).name.toLowerCase()}.
+              {answers.trainingStyle === 'strength' && answers.trainingDays.length > 4
+                ? ' More than four days runs the upper/lower split faster, not a bigger programme.'
+                : ''}
+            </p>
           </>
         )}
 

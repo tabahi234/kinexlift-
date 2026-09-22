@@ -48,7 +48,16 @@ import {
 import { isConditioningDay, nextDay, programFor } from '../domain/templates';
 import { buildSession, exerciseIdsForDay, type PlannedSession } from '../domain/plan';
 import { EXERCISES } from '../domain/exercises';
-import type { SessionHistory } from '../domain/progression';
+import { bestE1rm, type SessionHistory } from '../domain/progression';
+import {
+  gapNote,
+  sessionGate,
+  summariseSession,
+  trainingDaysOf,
+  type SessionGate,
+  type SessionSummary,
+} from '../domain/schedule';
+import { gapNoteDismissedOn, gateOverriddenOn } from '../lib/storage';
 import { buildDayPlan, slotsRemaining, type DayPlan } from '../domain/meals';
 import {
   allowedFoods,
@@ -440,6 +449,15 @@ export interface TodayState {
   readiness: Readiness | null;
   /** She keeps overriding the suggestion, so offer to stop making it. */
   offerToStopAdjusting: boolean;
+  /** Whether the next session may start: open, cooling down, or a rest day. */
+  gate: SessionGate;
+  /**
+   * The session she finished today, summarised - what the screen shows in
+   * place of a Start button while the gate is closed. Null if none today.
+   */
+  finishedToday: { session: Session; summary: SessionSummary; conditioning: boolean } | null;
+  /** The welcome-back line, or null when there is nothing to say. */
+  gapNote: string | null;
 }
 
 const EMPTY_TODAY: TodayState = {
@@ -451,6 +469,9 @@ const EMPTY_TODAY: TodayState = {
   checkin: null,
   readiness: null,
   offerToStopAdjusting: false,
+  gate: { kind: 'open' },
+  finishedToday: null,
+  gapNote: null,
 };
 
 /**
@@ -515,7 +536,59 @@ export async function getTodayState(): Promise<TodayState> {
     readiness,
     offerToStopAdjusting:
       adjustmentsEnabled(profile) && shouldOfferToStopAdjusting(await getOverrideTally()),
+    ...(await afterSession(profile, openSession)),
   };
+}
+
+/**
+ * The gate, the summary of today's finished session, and the gap note.
+ *
+ * Kept out of getTodayState's main body because none of it concerns the
+ * plan; it concerns whether she should be looking at one right now.
+ */
+async function afterSession(
+  profile: Profile,
+  openSession: Session | null,
+): Promise<Pick<TodayState, 'gate' | 'finishedToday' | 'gapNote'>> {
+  const now = Date.now();
+  const today = dateKey();
+  const finished = live(await db.sessions.toArray())
+    .filter((session) => session.endedAt !== null)
+    .sort((a, b) => b.endedAt! - a.endedAt!);
+  const last = finished[0] ?? null;
+
+  // A session underway is never gated - she is in it.
+  const gate: SessionGate = openSession
+    ? { kind: 'open' }
+    : sessionGate({
+        now,
+        lastFinishedAt: last?.endedAt ?? null,
+        trainingDays: trainingDaysOf(profile),
+        overridden: gateOverriddenOn(today),
+      });
+
+  let finishedToday: TodayState['finishedToday'] = null;
+  if (last && dateKey(new Date(last.endedAt!)) === today) {
+    const sets = await getSetsForSession(last.id);
+    const conditioning = sets.length === 0;
+    // Best on record per lift, from before this session, so a best is only
+    // ever claimed against real history.
+    const previousBest = new Map<string, number>();
+    for (const exerciseId of new Set(sets.map((set) => set.exerciseId))) {
+      const history = await getExerciseHistory(exerciseId, 24, last.id);
+      const best = Math.max(0, ...history.map((session) => bestE1rm(session) ?? 0));
+      if (best > 0) previousBest.set(exerciseId, best);
+    }
+    finishedToday = { session: last, summary: summariseSession(sets, previousBest), conditioning };
+  }
+
+  // Days since she last trained, counted from the session start so a
+  // session that ran past midnight counts for the day she began it.
+  const daysSince = last ? daysBetween(dateKey(new Date(last.startedAt)), today) : null;
+  const note =
+    openSession || finishedToday || gapNoteDismissedOn(today) ? null : gapNote(daysSince);
+
+  return { gate, finishedToday, gapNote: note };
 }
 
 /** A session she started and finished today, as opposed to one still open. */
@@ -561,6 +634,8 @@ export async function getNextUpInput(): Promise<NextUpInput | null> {
     loggedInSession:
       state.loggedSets.length + state.loggedConditioning.length,
     trainedToday: trained,
+    restDay: state.gate.kind === 'rest-day',
+    restDayNext: state.gate.kind === 'rest-day' ? state.gate.next : undefined,
     nutritionReady: nutrition.plan !== null,
     mealsLoggedToday: meals.length,
     proteinG: nutrition.intakeToday?.proteinG ?? 0,

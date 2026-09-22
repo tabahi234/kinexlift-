@@ -266,3 +266,26 @@ export function Dial({
     </div>
   );
 }
+
+/** A play triangle, for a link that opens a video. */
+export const IconPlay = (props: IconProps) => (
+  <Glyph {...props}>
+    <path d="M7.5 5.5v13l10-6.5z" />
+  </Glyph>
+);
+
+/** A pill, for supplements. */
+export const IconPill = (props: IconProps) => (
+  <Glyph {...props}>
+    <rect x="3.5" y="8.5" width="17" height="7" rx="3.5" transform="rotate(-45 12 12)" />
+    <path d="M9.5 9.5l5 5" />
+  </Glyph>
+);
+
+/** A box with a lid, for "your data": export, import, storage. */
+export const IconArchive = (props: IconProps) => (
+  <Glyph {...props}>
+    <rect x="3.5" y="4.5" width="17" height="4.5" rx="1" />
+    <path d="M5 9v9.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4" />
+  </Glyph>
+);

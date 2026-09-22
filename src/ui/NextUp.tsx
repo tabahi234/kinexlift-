@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { getNextUpInput } from '../db/derived';
 import { nextSteps, summariseSteps, type NextStep, type StepId } from '../domain/nextUp';
 import { useNav } from './nav';
+import { useTodayTick } from './useTodaysPlan';
 import {
   Dial,
   IconBowl,
@@ -60,7 +61,8 @@ function StepRow({ step, onGo }: { step: NextStep; onGo: () => void }) {
 }
 
 export function NextUp() {
-  const input = useLiveQuery(() => getNextUpInput(), []);
+  const tick = useTodayTick();
+  const input = useLiveQuery(() => getNextUpInput(), [tick]);
   const nav = useNav();
 
   if (!input) return null;

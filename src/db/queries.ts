@@ -31,6 +31,7 @@ import {
   type OverrideTally,
 } from '../domain/readiness';
 import { dateKey } from '../lib/date';
+import { buildChecklist, type Checklist } from '../domain/supplements';
 
 /**
  * Read models.
@@ -425,4 +426,15 @@ export async function getSessionsSince(days: number): Promise<number> {
   return live(await db.sessions.toArray()).filter(
     (session) => session.endedAt !== null && session.startedAt >= since,
   ).length;
+}
+
+/* ----------------------------- supplements ----------------------------- */
+
+/** Everything the supplements card needs for one day, in one read. */
+export async function getSupplementChecklist(date = dateKey()): Promise<Checklist> {
+  const [supplements, intake] = await Promise.all([
+    db.supplements.toArray(),
+    db.supplementIntake.where('date').equals(date).toArray(),
+  ]);
+  return buildChecklist(supplements, intake, date);
 }

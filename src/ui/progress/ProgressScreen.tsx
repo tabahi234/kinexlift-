@@ -18,6 +18,7 @@ import { trainingStyleOf } from '../../domain/profile';
 import { dateKey, daysBetween } from '../../lib/date';
 import { CycleScreen } from '../cycle/CycleScreen';
 import { useFocusEffect } from '../nav';
+import { PageHeader, SectionTabs, type SectionTab } from '../PageHeader';
 
 const CHART_WIDTH = 320;
 const CHART_HEIGHT = 96;
@@ -349,36 +350,23 @@ export function ProgressScreen() {
    * remembering that the switch lives on the You screen. The tab now stays and
    * the screen behind it explains that it is off and what is being kept.
    */
-  const tabs: { id: Panel; label: string }[] = [
-    { id: 'lifts', label: 'Lifts' },
-    { id: 'body', label: 'Body' },
-    { id: 'cycle', label: 'Cycle' },
+  const tabs: SectionTab<Panel>[] = [
+    { id: 'lifts', label: 'Lifts', about: 'How each lift is moving, worked out from the sets you logged.' },
+    { id: 'body', label: 'Body', about: 'Your weight over time. Log a weigh-in here, once a week is plenty.' },
+    { id: 'cycle', label: 'Cycle', about: 'Log periods and see your own patterns. Never changes your weights.' },
   ];
 
   const active = tabs.some((tab) => tab.id === panel) ? panel : 'lifts';
 
   return (
     <>
-      <header className="masthead">
-        <p className="eyebrow">Progress</p>
-        <h1>Your numbers</h1>
-        <p className="sub">Every figure here is worked out from what you logged.</p>
-      </header>
+      <PageHeader
+        eyebrow="Progress"
+        title="Your progress"
+        sub="Every figure here is worked out from what you logged."
+      />
 
-      <div className="segmented" role="tablist" aria-label="Progress sections">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={active === tab.id}
-            className={`segment ${active === tab.id ? 'selected' : ''}`}
-            onClick={() => setPanel(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <SectionTabs tabs={tabs} active={active} onChange={setPanel} label="Progress sections" />
 
       {active === 'lifts' && <LiftsPanel />}
       {active === 'body' && <BodyPanel />}

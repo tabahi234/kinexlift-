@@ -1371,3 +1371,424 @@
 .drawer-section .btn-block + .btn-block {
   margin-top: var(--space-2);
 }
+
+/* ------------------------- session: order & help ------------------------- */
+/*
+ * Round 1 of testing: "the exercise layout is confusing". Three fixes, all
+ * visible here - a step number so the cards read as a sequence, the
+ * prescription as a sentence, and the two things a first-timer wants (a
+ * video, and the reason for the weight) as chips rather than open text.
+ */
+
+.exercise-head {
+  align-items: flex-start;
+}
+
+.exercise-order {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+
+.exercise-card.complete .exercise-order {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+.exercise-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.prescription-main {
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.exercise-help {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.chip-link:visited {
+  color: var(--text);
+}
+
+/* ------------------------------ fuel: tabs ------------------------------ */
+
+.tab-about {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: calc(-1 * var(--space-2)) 0 0;
+  padding: 0 var(--space-1);
+}
+
+/* --------------------------- fuel: supplements --------------------------- */
+
+.supp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.supp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.supp-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.supp-row:last-child {
+  border-bottom: none;
+}
+
+.supp-tick {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: var(--space-1) 0;
+  font: inherit;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.supp-box {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 1.5px solid var(--rule-strong);
+  background: var(--surface);
+  color: var(--on-accent);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.supp-row.taken .supp-box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.supp-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.supp-name {
+  font-weight: 500;
+}
+
+.supp-row.taken .supp-name {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--rule-strong);
+}
+
+.supp-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.supp-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.supp-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.link-btn.inline {
+  display: inline;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* On a phone the sentence matters more than the badge staying on its line. */
+.prescription {
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+}
+
+/* --------------------------- session: the gate --------------------------- */
+/*
+ * "Session done", "Not yet", "Rest day": what sits where the Start button
+ * was. One card shape for the three, so the screen has one way of saying
+ * "nothing to lift right now".
+ */
+
+.done-card {
+  gap: var(--space-4);
+}
+
+.done-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.done-head h2 {
+  margin: 0;
+}
+
+.done-mark {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.done-mark.quiet {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.done-praise {
+  font-family: var(--font-display, inherit);
+  font-size: 1.15rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.done-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+}
+
+.done-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-3) var(--space-2);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.done-value {
+  font-size: 1.25rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.done-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.done-bests,
+.done-next {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.done-bests {
+  color: var(--accent-hover);
+  font-weight: 500;
+}
+
+.done-next {
+  color: var(--text-muted);
+}
+
+.gate-override {
+  align-self: flex-start;
+}
+
+.link-btn.gate-override {
+  color: var(--text-faint);
+  font-size: 0.8rem;
+}
+
+.gap-note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-left-color: var(--accent);
+}
+
+.gap-note p {
+  margin: 0;
+}
+
+.gap-note .link-btn {
+  align-self: flex-start;
+}
+
+@media (max-width: 400px) {
+  .done-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ---------------------------- header & menus ---------------------------- */
+/*
+ * "I did not know where I was." One header everywhere, a back arrow on
+ * anything one level down, and a settings menu that is a list of named
+ * places rather than three tabs of cards.
+ */
+
+.back-link {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  color: var(--accent-hover);
+  margin-left: -4px;
+}
+
+.back-link .eyebrow {
+  margin: 0;
+  color: inherit;
+}
+
+.back-arrow {
+  transform: rotate(180deg);
+}
+
+.menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu-item + .menu-item {
+  border-top: 1px solid var(--rule);
+}
+
+.menu-row {
+  appearance: none;
+  background: none;
+  border: none;
+  width: 100%;
+  padding: var(--space-3) 0;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.menu-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+.menu-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu-title {
+  font-size: 0.98rem;
+  font-weight: 500;
+}
+
+.menu-hint {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.menu-go {
+  flex: 0 0 auto;
+  color: var(--text-faint);
+}
+
+/* ------------------------------ day picker ------------------------------ */
+
+.day-picker {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.day-toggle {
+  appearance: none;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 12px 0;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--rule);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.day-toggle.on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.day-toggle[aria-disabled='true']:not(.on) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

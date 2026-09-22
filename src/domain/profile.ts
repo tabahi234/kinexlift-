@@ -30,6 +30,8 @@ export type ProfileSettings = Pick<
   | 'country'
   | 'coachOptIn'
   | 'cloudSync'
+  | 'trainingDays'
+  | 'daysPerWeek'
 >;
 
 export function trainingStyleOf(profile: Partial<ProfileSettings>): TrainingStyle {

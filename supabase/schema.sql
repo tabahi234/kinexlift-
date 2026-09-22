@@ -34,7 +34,9 @@ drop table if exists
   public."bodyMetrics",
   public."meals",
   public."chat",
-  public."coachNotes"
+  public."coachNotes",
+  public."supplements",
+  public."supplementIntake"
 cascade;
 
 -- Already ran an earlier version of this file? One column was added after
@@ -44,6 +46,16 @@ cascade;
 --
 -- Without it the meal sync rejects every row carrying a custom food, and
 -- takes the rest of that batch with it.
+--
+-- Two tables were added after that, for supplements (schema v3). If you
+-- would rather not drop everything: run only the "supplements" and
+-- "supplementIntake" create statements and their two `alter table ...
+-- _sane` constraints below, then the index + RLS do-block and the row-quota
+-- do-block (both are safe to re-run), and finally, by hand:
+--
+--   alter table public."supplementIntake"
+--     add constraint "supplementIntake_date_shape" check (date ~ '^\d{4}-\d{2}-\d{2}$');
+--   alter table public."profile" add column if not exists "trainingDays" integer[];
 
 /* ------------------------------- tables ------------------------------- */
 --
@@ -81,6 +93,9 @@ create table public."profile" (
   "foodAvoid" text[],
   "coachOptIn" boolean,
   "cloudSync" boolean,
+  -- v3: which weekdays she trains, 0 = Sunday. Null for a profile from
+  -- before the picker existed, which the app reads as "any day".
+  "trainingDays" integer[],
   primary key (user_id, id)
 );
 
@@ -214,6 +229,32 @@ create table public."coachNotes" (
   primary key (user_id, id)
 );
 
+-- What she takes that is not food, and the days she took it. See
+-- src/domain/supplements.ts: a list and a tick, no advice.
+create table public."supplements" (
+  id text not null,
+  user_id uuid not null default auth.uid(),
+  "updatedAt" bigint not null,
+  "deletedAt" bigint,
+  "schemaVersion" integer not null,
+  name text not null,
+  dose text,
+  timing text not null,
+  note text,
+  primary key (user_id, id)
+);
+
+create table public."supplementIntake" (
+  id text not null,
+  user_id uuid not null default auth.uid(),
+  "updatedAt" bigint not null,
+  "deletedAt" bigint,
+  "schemaVersion" integer not null,
+  "supplementId" text not null,
+  date text not null,
+  primary key (user_id, id)
+);
+
 /* -------------------- indexes and row-level security -------------------- */
 
 do $$
@@ -222,7 +263,8 @@ declare
 begin
   foreach t in array array[
     'profile', 'sessions', 'sets', 'checkins', 'cycleEvents',
-    'conditioning', 'bodyMetrics', 'meals', 'chat', 'coachNotes'
+    'conditioning', 'bodyMetrics', 'meals', 'chat', 'coachNotes',
+    'supplements', 'supplementIntake'
   ]
   loop
     -- The only query the client makes is "everything of mine changed since X".
@@ -311,6 +353,17 @@ alter table public."meals"
     and (custom is null or pg_column_size(custom) <= 2000)
   );
 
+alter table public."supplements"
+  add constraint supplements_sane check (
+    length(name) between 1 and 60
+    and (dose is null or length(dose) <= 40)
+    and length(timing) <= 20
+    and (note is null or length(note) <= 300)
+  );
+
+alter table public."supplementIntake"
+  add constraint intake_sane check (length("supplementId") <= 100);
+
 alter table public."profile"
   add constraint profile_sane check (
     ("bodyWeightKg" is null or ("bodyWeightKg" > 0 and "bodyWeightKg" <= 500))
@@ -321,6 +374,7 @@ alter table public."profile"
     and coalesce(array_length(equipment, 1), 0) <= 50
     and coalesce(array_length(limitations, 1), 0) <= 50
     and coalesce(array_length("foodAvoid", 1), 0) <= 50
+    and coalesce(array_length("trainingDays", 1), 0) <= 7
     and pg_column_size("exerciseOverrides") <= 20000
   );
 
@@ -331,7 +385,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['checkins', 'cycleEvents', 'bodyMetrics', 'meals', 'conditioning']
+  foreach t in array array['checkins', 'cycleEvents', 'bodyMetrics', 'meals', 'conditioning', 'supplementIntake']
   loop
     execute format(
       'alter table public.%I add constraint %I check (date ~ ''^\d{4}-\d{2}-\d{2}$'')',
@@ -385,7 +439,8 @@ declare
 begin
   foreach t in array array[
     'profile', 'sessions', 'sets', 'checkins', 'cycleEvents',
-    'conditioning', 'bodyMetrics', 'meals', 'chat', 'coachNotes'
+    'conditioning', 'bodyMetrics', 'meals', 'chat', 'coachNotes',
+    'supplements', 'supplementIntake'
   ]
   loop
     execute format('drop trigger if exists row_quota on public.%I', t);

@@ -52,6 +52,14 @@ export interface NextUpInput {
   /** Sets, or conditioning entries, logged into the open session. */
   loggedInSession: number;
   trainedToday: boolean;
+  /**
+   * Today is not one of her training days. The session step still exists -
+   * the list is the whole day - but it reads as a rest day and counts as
+   * done, so the dial does not sit at four of five forever on a Sunday.
+   * `restDayNext` is when the next one is: "tomorrow", "on Thursday".
+   */
+  restDay?: boolean;
+  restDayNext?: string;
   /** False until height, weight and age are known. */
   nutritionReady: boolean;
   mealsLoggedToday: number;
@@ -93,17 +101,24 @@ export function nextSteps(input: NextUpInput): NextStep[] {
     });
   }
 
-  steps.push({
-    id: 'checkin',
-    title: input.checkedIn ? 'Checked in' : 'Check in',
-    hint: input.checkedIn
-      ? 'Today’s session is set to how you said you feel.'
-      : 'Three taps, and it decides whether today is a full session or an easier one.',
-    cta: 'Check in',
-    screen: 'today',
-    focus: 'checkin',
-    done: input.checkedIn,
-  });
+  // The check-in tunes the session. Once the session is done, or today is
+  // a rest day, asking for it is asking her to answer three questions for
+  // nothing - and it was sitting at the top of the list as "Next" right
+  // under the card that congratulated her on finishing.
+  const checkinRelevant = input.checkedIn || (!input.trainedToday && !input.restDay);
+  if (checkinRelevant) {
+    steps.push({
+      id: 'checkin',
+      title: input.checkedIn ? 'Checked in' : 'Check in',
+      hint: input.checkedIn
+        ? 'Today’s session is set to how you said you feel.'
+        : 'Three taps, and it decides whether today is a full session or an easier one.',
+      cta: 'Check in',
+      screen: 'today',
+      focus: 'checkin',
+      done: input.checkedIn,
+    });
+  }
 
   if (input.trainedToday) {
     steps.push({
@@ -111,6 +126,15 @@ export function nextSteps(input: NextUpInput): NextStep[] {
       title: 'Trained today',
       hint: `${input.sessionName} is logged.`,
       cta: 'Open it',
+      screen: 'today',
+      done: true,
+    });
+  } else if (input.restDay && !input.sessionOpen) {
+    steps.push({
+      id: 'session',
+      title: 'Rest day',
+      hint: `${input.sessionName} is next, ${input.restDayNext ?? 'on your next training day'}.`,
+      cta: 'See it',
       screen: 'today',
       done: true,
     });

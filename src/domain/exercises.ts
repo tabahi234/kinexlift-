@@ -57,6 +57,28 @@ export interface Exercise {
   cue: string;
   /** Holds are logged and prescribed in seconds, not reps. */
   unit?: 'seconds';
+  /**
+   * A specific YouTube video, when somebody has watched one and vouched for
+   * it. Without one the app links to a search instead - see `videoUrl`.
+   */
+  videoId?: string;
+}
+
+/**
+ * Where "show me how" goes.
+ *
+ * A search rather than a hand-picked video by default, and that is a
+ * decision rather than a gap. Forty-nine curated links are forty-nine things
+ * that go dead the day a creator deletes a channel, and a dead link on the
+ * one screen she opens mid-set is worse than no link. A search never 404s.
+ * An exercise that has been given a `videoId` gets the video itself.
+ */
+export function videoUrl(exercise: Pick<Exercise, 'name' | 'videoId'>): string {
+  if (exercise.videoId) {
+    return `https://www.youtube.com/watch?v=${encodeURIComponent(exercise.videoId)}`;
+  }
+  const query = `${exercise.name} exercise how to proper form`;
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
 }
 
 /** Held positions where a rep count would be meaningless. */

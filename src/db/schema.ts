@@ -15,7 +15,7 @@
  * a calorie target. Every one is read through a resolver in domain/profile.ts.
  */
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export interface SyncMeta {
   /** uuid v7, generated on device. Stable across export/import and sync. */
@@ -108,6 +108,17 @@ export interface Profile extends SyncMeta {
   coachOptIn?: boolean;
   /** Same reasoning for backup: sync uploads special-category health data. */
   cloudSync?: boolean;
+
+  /* ---- added in v3 ---- */
+
+  /**
+   * Which weekdays she trains, as JS `getDay()` numbers (0 = Sunday). Asked
+   * for in testing: "most people have different routines". The rotation
+   * still decides *what* the next session is; this decides *when* the app
+   * expects her. Absent means "any day", which is how every profile before
+   * v3 behaved. Its length is kept equal to `daysPerWeek`.
+   */
+  trainingDays?: number[];
 }
 
 /** The profile is a singleton row; a fixed id keeps upserts trivial. */
@@ -354,4 +365,42 @@ export interface CoachNote extends SyncMeta {
   createdAt: number;
   /** For summaries: the createdAt of the newest message it covers. */
   coversUntil: number | null;
+}
+
+/* ----------------------------- supplements ----------------------------- */
+
+/**
+ * When in the day she takes it. Coarse on purpose: the app is a checklist,
+ * not a dosing schedule, and "with food" is what the packet says.
+ */
+export type SupplementTiming =
+  | 'morning'
+  | 'with-food'
+  | 'before-training'
+  | 'after-training'
+  | 'evening'
+  | 'any';
+
+/**
+ * Something she takes that is not food: iron, vitamin D, creatine.
+ *
+ * The app keeps the list and ticks the days; it does not decide what is on
+ * it. That is a doctor's call, and the coach's prompt forbids it from
+ * recommending one. A protein shake is a *food* - it has calories that
+ * count - and lives in the food table with `supplement: true`, not here.
+ */
+export interface Supplement extends SyncMeta {
+  name: string;
+  /** As she describes it: '1 tablet', '2000 IU', '5 g'. */
+  dose: string | null;
+  timing: SupplementTiming;
+  /** Free text: who prescribed it, why, when to stop. */
+  note: string | null;
+}
+
+/** One tick: she took this supplement on this day. Untick is a soft delete. */
+export interface SupplementIntake extends SyncMeta {
+  supplementId: string;
+  /** 'YYYY-MM-DD' local. */
+  date: string;
 }

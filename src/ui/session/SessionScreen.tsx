@@ -8,7 +8,8 @@ import {
   startSession,
   swapExercise,
 } from '../../db/actions';
-import { isBodyweight, isTimed, type Exercise } from '../../domain/exercises';
+import { isBodyweight, isTimed, videoUrl, type Exercise } from '../../domain/exercises';
+import { IconPlay } from '../icons';
 import type { PlannedExercise, PlannedSession } from '../../domain/plan';
 import type { SetLog } from '../../db/schema';
 import { adjustmentsEnabled } from '../../domain/readiness';
@@ -20,6 +21,7 @@ import { dateKey } from '../../lib/date';
 import { NextUp } from '../NextUp';
 import { AskPanel } from '../coach/AskPanel';
 import { useFocusEffect } from '../nav';
+import { CooldownCard, GapNote, RestDayCard, SessionDoneCard } from './GateCards';
 
 const KIND_LABEL: Record<string, string> = {
   calibrate: 'First time',
@@ -74,11 +76,16 @@ function SetLogger({
   exercise,
   startWeight,
   startReps,
+  setNumber,
+  totalSets,
   onLog,
 }: {
   exercise: Exercise;
   startWeight: number;
   startReps: number;
+  /** Which set this will be, so the button says so. */
+  setNumber: number;
+  totalSets: number;
   onLog: (input: { weightKg: number; reps: number; rir: number | null }) => Promise<void>;
 }) {
   const [weightKg, setWeight] = useState(startWeight);
@@ -145,22 +152,48 @@ function SetLogger({
           setBusy(false);
         }}
       >
-        Log set
+        Log set {setNumber} of {totalSets}
       </button>
     </div>
   );
+}
+
+/**
+ * What to do, in one sentence a first-timer can read.
+ *
+ * "20 kg × 8 to 12 reps" was correct and it was the thing testers said they
+ * could not follow: the set count was in a badge on the right, the weight
+ * had no verb, and "×" is notation. This says the whole prescription in the
+ * order she will do it - how many times, how many reps, how heavy.
+ */
+function describePrescription(exercise: Exercise, sets: number, range: [number, number], weightKg: number): string {
+  const [bottom, top] = range;
+  if (isTimed(exercise)) {
+    return `${sets} ${sets === 1 ? 'hold' : 'holds'} of ${bottom} to ${top} seconds`;
+  }
+  const reps = `${bottom} to ${top} reps`;
+  const load = isBodyweight(exercise)
+    ? 'with your bodyweight'
+    : exercise.isUnilateral
+      ? `at ${weightKg} kg each side`
+      : `at ${weightKg} kg`;
+  return `${sets} sets of ${reps} ${load}`;
 }
 
 function ExerciseCard({
   planned,
   logged,
   sessionId,
+  order,
 }: {
   planned: PlannedExercise;
   logged: SetLog[];
   sessionId: string | null;
+  /** 1-based position in today's session. */
+  order: number;
 }) {
   const [showSwap, setShowSwap] = useState(false);
+  const [showWhy, setShowWhy] = useState(false);
   const { exercise, prescription } = planned;
   const [bottom, top] = prescription.repRange;
   const done = logged.length;
@@ -179,7 +212,12 @@ function ExerciseCard({
   return (
     <section className={`card exercise-card ${complete ? 'complete' : ''}`}>
       <header className="exercise-head">
-        <div>
+        {/* The number is the order. Testers did not know whether the cards
+            were a list to work through or a menu to choose from. */}
+        <span className="exercise-order" aria-label={`Exercise ${order}`}>
+          {order}
+        </span>
+        <div className="exercise-title">
           <h3>{exercise.name}</h3>
           <p className="cue">{exercise.cue}</p>
         </div>
@@ -200,9 +238,7 @@ function ExerciseCard({
 
       <div className="prescription">
         <span className="prescription-main">
-          {isBodyweight(exercise) ? 'Bodyweight' : `${prescription.weightKg} kg`}
-          <span className="prescription-x"> × </span>
-          {bottom} to {top} {isTimed(exercise) ? 'seconds' : 'reps'}
+          {describePrescription(exercise, prescription.sets, [bottom, top], prescription.weightKg)}
         </span>
         <span className={`tag tag-${prescription.kind}`}>{KIND_LABEL[prescription.kind]}</span>
       </div>
@@ -215,7 +251,30 @@ function ExerciseCard({
         </p>
       )}
 
-      <p className="rationale">{prescription.rationale}</p>
+      {/* The two questions a first-timer has, side by side, each one tap.
+          The reasoning used to sit open under every card; four paragraphs of
+          "why" on a screen whose job is "what" is what made it hard to read. */}
+      <div className="exercise-help">
+        <a
+          className="chip small chip-link"
+          href={videoUrl(exercise)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <IconPlay size={13} />
+          Watch how to do it
+        </a>
+        <button
+          type="button"
+          className={`chip small ${showWhy ? 'selected' : ''}`}
+          aria-expanded={showWhy}
+          onClick={() => setShowWhy(!showWhy)}
+        >
+          Why these numbers?
+        </button>
+      </div>
+
+      {showWhy && <p className="rationale">{prescription.rationale}</p>}
 
       {done > 0 && (
         <div className="logged-sets">
@@ -244,6 +303,8 @@ function ExerciseCard({
           exercise={exercise}
           startWeight={prescription.weightKg}
           startReps={bottom}
+          setNumber={done + 1}
+          totalSets={prescription.sets}
           onLog={async (input) => {
             await logSet(sessionId, exercise.id, input);
           }}
@@ -287,6 +348,7 @@ export function SessionScreen() {
     checkinSkippedOn(dateKey()),
   );
   const [dismissedOffer, setDismissedOffer] = useState(false);
+  const [previewNext, setPreviewNext] = useState(false);
 
   useFocusEffect((focus) => {
     if (focus === 'checkin') setEditingCheckin(true);
@@ -295,8 +357,13 @@ export function SessionScreen() {
   if (!today) return <p className="loading-note">Loading your session…</p>;
   if (!today.plan || !today.profile) return null;
 
-  const { plan, profile, openSession, loggedSets, loggedConditioning, checkin, readiness } =
+  const { plan, profile, openSession, loggedSets, loggedConditioning, checkin, readiness, gate } =
     today;
+  // The next session may not start yet: she just finished one, or today is
+  // not one of her days. Everything about the plan is still computed - it is
+  // simply not offered, and the cards are behind a "preview" link.
+  const gated = !openSession && gate.kind !== 'open';
+  const showCards = !gated || previewNext;
   const overridden = openSession?.readinessOverride === true;
   const adjustmentsOn = adjustmentsEnabled(profile);
 
@@ -359,7 +426,9 @@ export function SessionScreen() {
               : `About ${plan.conditioning!.minutes} minutes.`
             : openSession
               ? `${totalLogged} of ${totalPlanned} sets logged.`
-              : `${plan.exercises.length} exercises. Roughly 45 minutes.`}
+              : gated
+                ? 'Up next.'
+                : `${plan.exercises.length} exercises, in order. Roughly 45 minutes.`}
         </p>
 
         {/* Only while a session is actually running - a full-width empty bar
@@ -381,7 +450,24 @@ export function SessionScreen() {
         )}
       </header>
 
-      <NextUp />
+      {today.gapNote && <GapNote note={today.gapNote} />}
+
+      {/* The strip is the answer to "what now?", and once a session is
+          running the answer is the session. It comes back when she finishes,
+          with the session ticked. */}
+      {/* One card, never two. Trained today: the done card says what is
+          next. Otherwise the gate says why there is no Start button. */}
+      {!openSession && today.finishedToday && (
+        <SessionDoneCard finished={today.finishedToday} gate={gate} nextName={plan.day.name} />
+      )}
+      {gated && !today.finishedToday && gate.kind === 'cooldown' && (
+        <CooldownCard gate={gate} nextName={plan.day.name} />
+      )}
+      {gated && !today.finishedToday && gate.kind === 'rest-day' && (
+        <RestDayCard gate={gate} nextName={plan.day.name} />
+      )}
+
+      {!openSession && <NextUp />}
 
       {/*
         No prompt when there is no check-in: the strip above already has it as
@@ -422,13 +508,24 @@ export function SessionScreen() {
         </div>
       )}
 
-      {!openSession && (
+      {!openSession && !gated && (
         <button
           type="button"
           className="btn btn-primary btn-block"
           onClick={() => void startSession(plan.day.id)}
         >
           Start this session
+        </button>
+      )}
+
+      {gated && (
+        <button
+          type="button"
+          className="btn btn-quiet btn-block"
+          aria-expanded={previewNext}
+          onClick={() => setPreviewNext(!previewNext)}
+        >
+          {previewNext ? 'Hide the next session' : `Preview ${plan.day.name}`}
         </button>
       )}
 
@@ -446,7 +543,7 @@ export function SessionScreen() {
         </button>
       )}
 
-      {plan.conditioning ? (
+      {!showCards ? null : plan.conditioning ? (
         <ConditioningCard
           prescription={plan.conditioning}
           profile={profile}
@@ -454,9 +551,10 @@ export function SessionScreen() {
           logged={loggedConditioning}
         />
       ) : (
-        plan.exercises.map((planned) => (
+        plan.exercises.map((planned, index) => (
           <ExerciseCard
             key={planned.slotKey}
+            order={index + 1}
             planned={planned}
             logged={setsFor(planned.exercise.id)}
             sessionId={openSession?.id ?? null}

@@ -105,3 +105,27 @@ describe('nextSteps', () => {
     }
   });
 });
+
+describe('rest days', () => {
+  it('counts a rest day as done and names the next session', () => {
+    const result = make({ restDay: true, restDayNext: 'on Thursday' });
+    const session = result.steps.find((step) => step.id === 'session')!;
+    expect(session.done).toBe(true);
+    expect(session.title).toBe('Rest day');
+    expect(session.hint).toContain('on Thursday');
+  });
+
+  it('is not a rest day once a session is open or done', () => {
+    expect(make({ restDay: true, sessionOpen: true }).steps.find((s) => s.id === 'session')!.title).toMatch(/^Finish/);
+    expect(make({ restDay: true, trainedToday: true }).steps.find((s) => s.id === 'session')!.title).toBe('Trained today');
+  });
+});
+
+describe('check-in relevance', () => {
+  it('drops the check-in once she has trained or on a rest day, but keeps it if answered', () => {
+    expect(ids({ trainedToday: true })).not.toContain('checkin');
+    expect(ids({ restDay: true })).not.toContain('checkin');
+    expect(ids({ trainedToday: true, checkedIn: true })).toContain('checkin');
+    expect(ids()).toContain('checkin');
+  });
+});

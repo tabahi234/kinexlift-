@@ -70,8 +70,10 @@ local is a deliberate legal advantage as well as an ethical one.
 | **P4** | Nutrition targets, BMI, South Asian food table | ✅ |
 | **P5** | Hybrid protocol, AI coach with memory, opt-in sync | ✅ |
 | **P6** | Wayfinding, a coach that can act, and a face: icons, gauges, a welcome | ✅ |
+| **T1** | Round-1 tester feedback: exercise cards as a sequence, video links, supplements, clearer Fuel | ✅ |
+| **T2** | Session-done card and 8 h gate, training days, welcome-back note, settings menu, one page header | ✅ |
 
-321 tests pass. `npm run typecheck` is clean.
+354 tests pass. `npm run typecheck` is clean.
 
 ## The five screens
 
@@ -422,7 +424,7 @@ src/
   config.ts          app name, colours, slug — rename the product here
   db/
     schema.ts        the data model and SyncMeta
-    db.ts            Dexie instance and indexes (v2)
+    db.ts            Dexie instance and indexes (v3)
     repo.ts          every write goes through here, so SyncMeta is never missed
     export.ts        export, validation, import, last-write-wins merge
     queries.ts       read models — every number is derived, never stored
@@ -445,10 +447,12 @@ src/
     cuisines.ts      countries, the eight regions, and the map between them
     estimate.ts      bounding a guessed food into something a log can hold
     meals.ts         deterministic meal assembly, for a day or the rest of one
+    supplements.ts   the checklist of what she takes - a list and a tick, no advice
     coach.ts         the briefing and the system prompt
     proposals.ts     what the coach may offer, and the parser that enforces it
     nextUp.ts        today's checklist - the answer to 'what now?'
-    *.test.ts        321 tests, all of them here or in db/
+    schedule.ts      training days, the 8-hour gate, the gap note, the session summary
+    *.test.ts        354 tests, all of them here or in db/
   lib/
     id.ts            monotonic UUID v7
     date.ts          local date keys, DST-safe day arithmetic
@@ -463,8 +467,12 @@ src/
     nav.tsx          cross-screen navigation, with a one-shot "open this"
     icons.tsx        the stroke icon set, the brand mark and the ring gauge
     NextUp.tsx       the what-next strip on Today
+    PageHeader.tsx   one header, one tab strip, one menu row - for every screen
+    DayPicker.tsx    Mon-Sun toggles; onboarding and You share it
+    session/GateCards.tsx  session done, not yet, rest day - and the way round
     AccountCard.tsx  sign in, sign up, reset, and what to do next
     CountryPicker.tsx  where she cooks - onboarding, You and Fuel share it
+    fuel/            the picker, the custom food form and the supplements card
     coach/           the thread, the ask boxes, and the proposal cards
   styles/            design tokens (light + dark), app, v2 and v3 styles
 legacy/prototype/    the original vanilla HTML/CSS/JS, kept for reference
